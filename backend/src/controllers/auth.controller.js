@@ -71,11 +71,15 @@ const login = async (req, res, next) => {
       [user.id, user.nome, 'LOGIN_SUCESSO', 'auth', req.ip, 200]
     ).catch(() => { });
 
+    const cookieSameSite = process.env.COOKIE_SAMESITE || 'Strict';
+    const isSameSiteNone = cookieSameSite.toLowerCase() === 'none';
+    const cookieSecure = isSameSiteNone || process.env.COOKIE_SECURE === 'true' || process.env.NODE_ENV === 'production';
+
     // ✅ SEGURANÇA: Enviar token em httpOnly cookie (protege contra XSS)
     res.cookie('authToken', token, {
       httpOnly: true,      // Não acessível via JavaScript
-      secure: process.env.NODE_ENV === 'production',  // HTTPS only em produção
-      sameSite: 'Strict',  // Protege contra CSRF
+      secure: cookieSecure,  // HTTPS only
+      sameSite: isSameSiteNone ? 'none' : cookieSameSite,
       maxAge: 24 * 60 * 60 * 1000,  // 24 horas
       path: '/'
     });
@@ -106,8 +110,16 @@ const logout = async (req, res, next) => {
       [req.user.id, req.user.nome]
     );
 
+    const cookieSameSite = process.env.COOKIE_SAMESITE || 'Strict';
+    const isSameSiteNone = cookieSameSite.toLowerCase() === 'none';
+    const cookieSecure = isSameSiteNone || process.env.COOKIE_SECURE === 'true' || process.env.NODE_ENV === 'production';
+
     // ✅ Limpar cookie httpOnly
-    res.clearCookie('authToken', { path: '/' });
+    res.clearCookie('authToken', { 
+      path: '/',
+      secure: cookieSecure,
+      sameSite: isSameSiteNone ? 'none' : cookieSameSite
+    });
 
     res.json({ success: true, message: 'Sessão terminada com sucesso' });
   } catch (err) {
