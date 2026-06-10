@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import api from '../services/api';
 import { FileText, Upload, Download, Search, File, Image as ImageIcon } from 'lucide-react';
 import { toast } from 'react-hot-toast';
@@ -161,7 +162,7 @@ const Documentos = () => {
         </div>
       </div>
 
-      {showModal && (
+      {showModal && createPortal(
         <div className="modal-backdrop">
           <div className="modal-card max-w-md">
             <div className="modal-header">
@@ -235,7 +236,8 @@ const Documentos = () => {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

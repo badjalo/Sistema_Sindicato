@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import api from '../services/api';
-import { CreditCard, Search, Filter, XCircle } from 'lucide-react';
+import { CreditCard, Search, Filter, XCircle, Plus } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import MemberSearchInput from '../components/MemberSearchInput';
+import PageHeader from '../components/PageHeader';
 
 const Quotas = () => {
   const [quotas, setQuotas] = useState([]);
@@ -162,34 +164,35 @@ const Quotas = () => {
   };
 
   return (
-    <div className="fade-in space-y-6 relative">
-      <div className="page-title">
-        <span />
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <CreditCard size={28} className="text-blue-600" />
-            Quota e Fundo Social
-          </h1>
-          <p className="text-gray-500 text-sm mt-1">Lista de membros com estado mensal de quota e fundo social, meses pagos, meses em dívida e total de pagamento.</p>
-        </div>
-      </div>
-      <div className="flex gap-2">
+    <div className="space-y-6">
+      <PageHeader
+        icon={CreditCard}
+        title="Quota e Fundo Social"
+        subtitle="Estado mensal de quota e fundo social — meses pagos, em dívida e total"
+        actions={
+          <button onClick={() => setShowModal(true)} className="btn btn-primary">
+            <Plus size={16} /> Registar Pagamento
+          </button>
+        }
+      />
+      <div
+        className="flex gap-2"
+        style={{ animation: 'fadeUp 0.35s ease-out 0.1s both' }}
+      >
         <select
           value={ano}
           onChange={(e) => setAno(Number(e.target.value))}
-          className="form-control font-semibold bg-white"
+          className="form-control font-semibold"
+          style={{ maxWidth: '160px' }}
         >
           {[...Array(5)].map((_, i) => {
             const year = new Date().getFullYear() - i;
             return <option key={year} value={year}>Ano {year}</option>;
           })}
         </select>
-        <button onClick={() => setShowModal(true)} className="btn btn-primary">
-          Registar Pagamento
-        </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 stagger-children">
         <div className="card p-4" style={{ background: 'var(--success-bg)', borderColor: 'rgba(16, 185, 129, 0.2)' }}>
           <div className="text-sm text-green-700 uppercase font-semibold tracking-wide">Total Pago (Quota + Fundo)</div>
           <div className="mt-3 text-3xl font-bold text-green-900">{new Intl.NumberFormat('pt-GW', { style: 'currency', currency: 'XOF' }).format(totalPagas)}</div>
@@ -294,7 +297,7 @@ const Quotas = () => {
         </div>
       </div>
 
-      {showModal && (
+      {showModal && createPortal(
         <div className="modal-backdrop">
           <div className="modal-card max-w-md">
             <div className="modal-header">
@@ -439,7 +442,8 @@ const Quotas = () => {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

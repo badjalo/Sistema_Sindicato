@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import api from '../services/api';
 import { MessageSquare, Plus, Bell, Clock, Trash2, Edit2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
@@ -102,53 +103,55 @@ const Comunicados = () => {
   };
 
   return (
-    <div className="fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-      <div className="flex justify-between items-end">
-        <div>
-          <h1 className="text-2xl font-bold">Comunicação Interna</h1>
-          <p className="text-gray-500 text-sm mt-2">Gestão de circulares, avisos e anúncios gerais</p>
+    <>
+      <div className="fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+        <div className="flex justify-between items-end">
+          <div>
+            <h1 className="text-2xl font-bold">Comunicação Interna</h1>
+            <p className="text-gray-500 text-sm mt-2">Gestão de circulares, avisos e anúncios gerais</p>
+          </div>
+          <button onClick={() => openModal()} className="btn btn-primary">
+            <Plus size={18} /> Novo Comunicado
+          </button>
         </div>
-        <button onClick={() => openModal()} className="btn btn-primary">
-          <Plus size={18} /> Novo Comunicado
-        </button>
-      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {loading ? (
-           <div className="col-span-full flex justify-center p-8"><div className="spinner"></div></div>
-        ) : comunicados.length === 0 ? (
-          <div className="col-span-full text-center p-8 text-gray-500 card">Nenhum comunicado registado.</div>
-        ) : (
-          comunicados.map(com => (
-            <div key={com.id} className="card flex-col group relative" style={{ display: 'flex', gap: '1rem', height: '100%' }}>
-              <div className="flex justify-between items-start mb-2">
-                <span className={`badge ${getBadgeClass(com.tipo, com.urgente)} uppercase text-[10px]`}>
-                  {com.urgente ? 'Urgente' : com.tipo}
-                </span>
-                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button onClick={() => openModal(com)} className="btn-icon bg-gray-50"><Edit2 size={16}/></button>
-                  <button onClick={() => handleEliminar(com.id, com.titulo)} className="btn-icon bg-red-50 text-red-500 hover:text-red-700"><Trash2 size={16}/></button>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {loading ? (
+             <div className="col-span-full flex justify-center p-8"><div className="spinner"></div></div>
+          ) : comunicados.length === 0 ? (
+            <div className="col-span-full text-center p-8 text-gray-500 card">Nenhum comunicado registado.</div>
+          ) : (
+            comunicados.map(com => (
+              <div key={com.id} className="card flex-col group relative" style={{ display: 'flex', gap: '1rem', height: '100%' }}>
+                <div className="flex justify-between items-start mb-2">
+                  <span className={`badge ${getBadgeClass(com.tipo, com.urgente)} uppercase text-[10px]`}>
+                    {com.urgente ? 'Urgente' : com.tipo}
+                  </span>
+                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button onClick={() => openModal(com)} className="btn-icon bg-gray-50"><Edit2 size={16}/></button>
+                    <button onClick={() => handleEliminar(com.id, com.titulo)} className="btn-icon bg-red-50 text-red-500 hover:text-red-700"><Trash2 size={16}/></button>
+                  </div>
+                </div>
+                
+                <h3 className="text-lg font-bold text-gray-900 leading-tight">{com.titulo}</h3>
+                <p className="text-sm text-gray-600 flex-1 line-clamp-3">{com.conteudo}</p>
+                
+                <div className="flex justify-between items-center text-xs text-gray-400 mt-4 pt-4 border-t border-gray-100">
+                  <span className="flex items-center gap-1"><Clock size={14}/> {new Date(com.criado_em).toLocaleDateString('pt-PT')}</span>
+                  <span className="flex items-center gap-1">
+                    <Bell size={14}/> 
+                    {com.estado === 'publicado' ? 'Publicado' : 'Rascunho'}
+                  </span>
                 </div>
               </div>
-              
-              <h3 className="text-lg font-bold text-gray-900 leading-tight">{com.titulo}</h3>
-              <p className="text-sm text-gray-600 flex-1 line-clamp-3">{com.conteudo}</p>
-              
-              <div className="flex justify-between items-center text-xs text-gray-400 mt-4 pt-4 border-t border-gray-100">
-                <span className="flex items-center gap-1"><Clock size={14}/> {new Date(com.criado_em).toLocaleDateString('pt-PT')}</span>
-                <span className="flex items-center gap-1">
-                  <Bell size={14}/> 
-                  {com.estado === 'publicado' ? 'Publicado' : 'Rascunho'}
-                </span>
-              </div>
-            </div>
-          ))
-        )}
+            ))
+          )}
+        </div>
       </div>
 
-      {showModal && (
+      {showModal && createPortal(
         <div className="modal-backdrop">
-          <div className="modal-card max-w-lg">
+          <div className="modal-card max-w-2xl w-full">
             <div className="modal-header">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-lg bg-blue-100 flex items-center justify-center">
@@ -238,9 +241,10 @@ const Comunicados = () => {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
-    </div>
+    </>
   );
 };
 
