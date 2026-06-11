@@ -91,7 +91,7 @@ const servePublicUpload = (uploadsBasePath) => {
             const { subdir, filename } = req.params;
 
             // Apenas permitir servir imagens de certas subpastas
-            const allowedSubdirs = ['fotos', 'assinaturas', 'assets'];
+            const allowedSubdirs = ['fotos', 'assinaturas', 'assets', 'slider'];
             if (!allowedSubdirs.includes(subdir)) {
                 return res.status(403).json({ error: 'Tipo de ficheiro não permitido' });
             }

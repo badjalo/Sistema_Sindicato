@@ -36,6 +36,7 @@ const menuGroups = [
     label: 'Sistema',
     items: [
       { path: '/configuracoes', icon: Settings, label: 'Configurações' },
+      { path: '/configuracao-slider', icon: LayoutDashboard, label: 'Configuração Slider' },
     ]
   },
 ];

@@ -7,6 +7,7 @@ import {
   Building2, Phone, Mail, MapPin, Zap, Lock, Globe, Award
 } from 'lucide-react';
 import logo from '../assets/logo.jpeg';
+import HeroSlider from '../components/HeroSlider';
 
 // ─── NAVBAR ────────────────────────────────────────────────────────────────
 const Navbar = ({ configs }) => {
@@ -552,6 +553,7 @@ const LandingPage = () => {
   return (
     <div className="font-sans antialiased">
       <Navbar configs={configs} />
+      <HeroSlider />
       <Hero configs={configs} />
       <FeaturesSection />
       <BenefitsSection configs={configs} />

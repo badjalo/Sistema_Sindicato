@@ -21,6 +21,7 @@ import Comunicados from './pages/Comunicados';
 import Relatorios from './pages/Relatorios';
 import Departamentos from './pages/Departamentos';
 import Configuracoes from './pages/Configuracoes';
+import ConfiguracaoSlider from './pages/ConfiguracaoSlider';
 
 function App() {
   return (
@@ -80,6 +81,7 @@ function App() {
               <Route path="/relatorios"    element={<Relatorios />} />
               <Route path="/departamentos" element={<Departamentos />} />
               <Route path="/configuracoes" element={<Configuracoes />} />
+              <Route path="/configuracao-slider" element={<ConfiguracaoSlider />} />
             </Route>
           </Route>
 

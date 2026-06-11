@@ -136,6 +136,7 @@ app.use('/api/cartoes', require('./src/routes/cartoes.routes'));
 app.use('/api/dashboard', require('./src/routes/dashboard.routes'));
 app.use('/api/configuracoes', require('./src/routes/configuracoes.routes'));
 app.use('/api/auditoria', require('./src/routes/auditoria.routes'));
+app.use('/api/slider', require('./src/routes/slider.routes'));
 
 // ── Endpoint de Download Seguro ──────────────────────────────
 const { authenticate } = require('./src/middleware/auth');
