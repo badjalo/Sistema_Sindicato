@@ -137,6 +137,8 @@ app.use('/api/dashboard', require('./src/routes/dashboard.routes'));
 app.use('/api/configuracoes', require('./src/routes/configuracoes.routes'));
 app.use('/api/auditoria', require('./src/routes/auditoria.routes'));
 app.use('/api/slider', require('./src/routes/slider.routes'));
+app.use('/api/sindicato', require('./src/routes/sindicato.routes'));
+app.use('/api/contacto', require('./src/routes/contacto.routes'));
 
 // ── Endpoint de Download Seguro ──────────────────────────────
 const { authenticate } = require('./src/middleware/auth');

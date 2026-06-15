@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import {
   LayoutDashboard, Users, CreditCard, DollarSign,
   FileText, MessageSquare, BarChart3, Building,
-  Settings, LogOut, ChevronLeft, ChevronRight
+  Settings, LogOut, ChevronLeft, ChevronRight, Landmark, Inbox
 } from 'lucide-react';
 import logo from '../assets/logo.jpeg';
 
@@ -27,9 +27,11 @@ const menuGroups = [
   {
     label: 'Organização',
     items: [
-      { path: '/departamentos', icon: Building,      label: 'Departamentos' },
-      { path: '/documentos',    icon: FileText,      label: 'Documentos' },
-      { path: '/comunicados',   icon: MessageSquare, label: 'Comunicados' },
+      { path: '/departamentos',   icon: Building,      label: 'Departamentos' },
+      { path: '/documentos',      icon: FileText,      label: 'Documentos' },
+      { path: '/comunicados',     icon: MessageSquare, label: 'Comunicados' },
+      { path: '/sindicato-admin', icon: Landmark,      label: 'O Sindicato' },
+      { path: '/mensagens',       icon: Inbox,         label: 'Mensagens' },
     ]
   },
   {
