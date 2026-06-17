@@ -5,11 +5,17 @@ import ProtectedRoute from './components/ProtectedRoute';
 import PublicRoute from './components/PublicRoute';
 import Layout from './components/Layout';
 
-// Pages
+// Pages — Públicas
 import Login from './pages/Login';
 import LandingPage from './pages/LandingPage';
 import Noticias from './pages/Noticias';
 import DocumentosPublicos from './pages/DocumentosPublicos';
+import Sindicato from './pages/Sindicato';
+import Contacto from './pages/Contacto';
+import EsqueciSenha from './pages/EsqueciSenha';
+
+
+// Pages — Protegidas
 import Dashboard from './pages/Dashboard';
 import MembrosList from './pages/Membros/MembrosList';
 import MembroForm from './pages/Membros/MembroForm';
@@ -22,12 +28,12 @@ import Documentos from './pages/Documentos';
 import Comunicados from './pages/Comunicados';
 import Relatorios from './pages/Relatorios';
 import Departamentos from './pages/Departamentos';
-import Configuracoes from './pages/Configuracoes';
-import ConfiguracaoSlider from './pages/ConfiguracaoSlider';
-import Sindicato from './pages/Sindicato';
 import SindicatoAdmin from './pages/SindicatoAdmin';
-import Contacto from './pages/Contacto';
 import Mensagens from './pages/Mensagens';
+import Auditoria from './pages/Auditoria';
+import Configuracoes from './pages/Configuracoes';
+import Utilizadores from './pages/Utilizadores';
+import Perfil from './pages/Perfil';
 
 function App() {
   return (
@@ -59,53 +65,43 @@ function App() {
           }}
         />
         <Routes>
-          {/* Public: landing page (redirects to /dashboard if already logged in) */}
-          <Route path="/" element={<PublicRoute><LandingPage /></PublicRoute>} />
-
-          {/* Public: sindicato */}
-          <Route path="/sindicato" element={<Sindicato />} />
-
-          {/* Public: noticias */}
-          <Route path="/noticias" element={<Noticias />} />
-
-          {/* Public: documentos */}
+          {/* ── Rotas Públicas ─────────────────────────────────────────────── */}
+          <Route path="/"                    element={<PublicRoute><LandingPage /></PublicRoute>} />
+          <Route path="/sindicato"           element={<Sindicato />} />
+          <Route path="/noticias"            element={<Noticias />} />
           <Route path="/documentos-publicos" element={<DocumentosPublicos />} />
+          <Route path="/contacto"            element={<Contacto />} />
+          <Route path="/esqueci-senha"        element={<EsqueciSenha />} />
 
-          {/* Public: contacto */}
-          <Route path="/contacto" element={<Contacto />} />
+          <Route path="/login"               element={<Login />} />
 
-          {/* Public: login */}
-          <Route path="/login" element={<Login />} />
-
-          {/*
-            Protected area:
-            ProtectedRoute (Outlet) → Layout (Outlet) → page
-            Sidebar uses absolute paths like /dashboard, /membros — preserved exactly.
-          */}
+          {/* ── Rotas Protegidas ───────────────────────────────────────────── */}
           <Route element={<ProtectedRoute />}>
             <Route element={<Layout />}>
-              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/dashboard"              element={<Dashboard />} />
 
-              <Route path="/membros" element={<MembrosList />} />
-              <Route path="/membros/novo" element={<MembroForm />} />
-              <Route path="/membros/:id" element={<MembroDetalhe />} />
-              <Route path="/membros/:id/editar" element={<MembroEditar />} />
-              <Route path="/membros/:id/cartao" element={<MembroCartao />} />
+              <Route path="/membros"                element={<MembrosList />} />
+              <Route path="/membros/novo"           element={<MembroForm />} />
+              <Route path="/membros/:id"            element={<MembroDetalhe />} />
+              <Route path="/membros/:id/editar"     element={<MembroEditar />} />
+              <Route path="/membros/:id/cartao"     element={<MembroCartao />} />
 
-              <Route path="/quotas" element={<Quotas />} />
-              <Route path="/financeiro" element={<Financeiro />} />
-              <Route path="/documentos" element={<Documentos />} />
-              <Route path="/comunicados" element={<Comunicados />} />
-              <Route path="/relatorios" element={<Relatorios />} />
-              <Route path="/departamentos" element={<Departamentos />} />
-              <Route path="/sindicato-admin" element={<SindicatoAdmin />} />
-              <Route path="/mensagens" element={<Mensagens />} />
-              <Route path="/configuracoes" element={<Configuracoes />} />
-              <Route path="/configuracao-slider" element={<ConfiguracaoSlider />} />
+              <Route path="/quotas"                 element={<Quotas />} />
+              <Route path="/financeiro"             element={<Financeiro />} />
+              <Route path="/documentos"             element={<Documentos />} />
+              <Route path="/comunicados"            element={<Comunicados />} />
+              <Route path="/relatorios"             element={<Relatorios />} />
+              <Route path="/departamentos"          element={<Departamentos />} />
+              <Route path="/sindicato-admin"        element={<SindicatoAdmin />} />
+              <Route path="/mensagens"              element={<Mensagens />} />
+              <Route path="/auditoria"              element={<Auditoria />} />
+              <Route path="/configuracoes"          element={<Configuracoes />} />
+              <Route path="/utilizadores"           element={<Utilizadores />} />
+              <Route path="/perfil"                 element={<Perfil />} />
             </Route>
           </Route>
 
-          {/* Fallback */}
+          {/* ── Fallback ───────────────────────────────────────────────────── */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AuthProvider>

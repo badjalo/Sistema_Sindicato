@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import { toast } from 'react-hot-toast';
-import logoImg from '../../assets/logo.jpeg';
+import logoImg from '../../assets/logo.png';
 import QRCode from 'qrcode';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';

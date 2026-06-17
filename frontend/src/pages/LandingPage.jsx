@@ -6,8 +6,8 @@ import {
   Bell, Settings, CheckCircle, ArrowRight, Menu, X,
   Building2, Phone, Mail, MapPin, Zap, Lock, Globe, Award, Calendar, Heart, Tag, Download
 } from 'lucide-react';
-import logo from '../assets/logo.jpeg';
-import HeroSlider from '../components/HeroSlider';
+import logo from '../assets/logo.png';
+
 
 // ─── NAVBAR ────────────────────────────────────────────────────────────────
 const Navbar = ({ configs }) => {
@@ -700,7 +700,7 @@ const LandingPage = () => {
   return (
     <div className="font-sans antialiased">
       <Navbar configs={configs} />
-      <HeroSlider />
+
       <Hero configs={configs} />
       <NewsSection />
       <DocumentsSection />

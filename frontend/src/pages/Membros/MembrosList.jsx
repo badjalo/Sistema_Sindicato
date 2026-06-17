@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../services/api';
-import { Users, Search, Plus, Filter, Edit2, Trash2, Eye, Heart, ChevronLeft, ChevronRight } from 'lucide-react';
+import {
+  Users, Search, Plus, Filter, Edit2, Trash2, Eye, Heart,
+  ChevronLeft, ChevronRight, CheckSquare, CreditCard, RefreshCw, Square
+} from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import PageHeader from '../../components/PageHeader';
 
@@ -18,6 +21,7 @@ const estadoBadge = (estado) => {
 /* Skeleton row */
 const SkeletonRow = ({ delay = 0 }) => (
   <tr style={{ animation: `fadeUp 0.3s ease-out ${delay}ms both` }}>
+    <td><div className="skeleton w-4 h-4 rounded" /></td>
     <td>
       <div className="flex items-center gap-3">
         <div className="skeleton w-9 h-9 rounded-full flex-shrink-0" />
@@ -39,11 +43,15 @@ const SkeletonRow = ({ delay = 0 }) => (
 );
 
 const MembrosList = () => {
-  const [membros, setMembros]       = useState([]);
-  const [loading, setLoading]       = useState(true);
-  const [search, setSearch]         = useState('');
+  const [membros, setMembros]           = useState([]);
+  const [loading, setLoading]           = useState(true);
+  const [search, setSearch]             = useState('');
   const [estadoFilter, setEstadoFilter] = useState('');
-  const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, pages: 0 });
+  const [pagination, setPagination]     = useState({ page: 1, limit: 10, total: 0, pages: 0 });
+
+  // Batch selection
+  const [selectedIds, setSelectedIds]               = useState([]);
+  const [exportingCards, setExportingCards]          = useState(false);
 
   const fetchMembros = async (page = pagination.page) => {
     setLoading(true);
@@ -67,6 +75,19 @@ const MembrosList = () => {
   }, [search]);
   useEffect(() => { fetchMembros(); }, [pagination.page]);
 
+  // Clear selection when list changes
+  useEffect(() => { setSelectedIds([]); }, [membros]);
+
+  const handleSelectAll = (e) => {
+    setSelectedIds(e.target.checked ? membros.map(m => m.id) : []);
+  };
+
+  const handleToggleSelect = (id) => {
+    setSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(mid => mid !== id) : [...prev, id]
+    );
+  };
+
   const handleDelete = async (id, nome) => {
     if (!window.confirm(`Eliminar o membro "${nome}"?`)) return;
     try {
@@ -78,8 +99,47 @@ const MembrosList = () => {
     }
   };
 
+  const handleExportCartoesLote = async () => {
+    if (!selectedIds.length) {
+      toast.error('Nenhum membro selecionado.');
+      return;
+    }
+
+    setExportingCards(true);
+    const t = toast.loading(`A gerar ${selectedIds.length} cartão(ões) PDF para impressão PVC...`);
+
+    try {
+      const response = await api.post(
+        '/membros/cartao/lote',
+        { membro_ids: selectedIds },
+        { responseType: 'blob' }
+      );
+
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `cartoes_membros_lote_${selectedIds.length}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast.dismiss(t);
+      toast.success(`${selectedIds.length} cartão(ões) exportado(s) com sucesso!`);
+      setSelectedIds([]);
+    } catch (err) {
+      toast.dismiss(t);
+      toast.error(err.response?.data?.error || 'Erro ao gerar cartões em lote.');
+    } finally {
+      setExportingCards(false);
+    }
+  };
+
+  const allSelected = membros.length > 0 && selectedIds.length === membros.length;
+  const someSelected = selectedIds.length > 0 && selectedIds.length < membros.length;
+
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 fade-in">
 
       <PageHeader
         icon={Users}
@@ -138,6 +198,38 @@ const MembrosList = () => {
         </div>
       </div>
 
+      {/* Batch Action Bar */}
+      {selectedIds.length > 0 && (
+        <div
+          className="card border-indigo-500/30 bg-indigo-500/5 p-4 flex items-center justify-between gap-4 fade-in"
+        >
+          <div className="flex items-center gap-2">
+            <CheckSquare className="text-indigo-400" size={20} />
+            <span className="text-sm font-bold text-indigo-400">
+              {selectedIds.length} {selectedIds.length === 1 ? 'membro selecionado' : 'membros selecionados'}
+            </span>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setSelectedIds([])}
+              className="btn btn-secondary text-xs py-1.5"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleExportCartoesLote}
+              disabled={exportingCards}
+              className="btn btn-primary text-xs py-1.5 flex items-center gap-1.5"
+            >
+              {exportingCards
+                ? <><RefreshCw size={13} className="animate-spin" /> A gerar PDF...</>
+                : <><CreditCard size={13} /> Exportar Cartões PDF ({selectedIds.length})</>
+              }
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Table */}
       <div
         className="table-container"
@@ -146,6 +238,16 @@ const MembrosList = () => {
         <table className="table">
           <thead>
             <tr>
+              <th className="w-10 text-center">
+                <input
+                  type="checkbox"
+                  checked={allSelected}
+                  ref={el => { if (el) el.indeterminate = someSelected; }}
+                  onChange={handleSelectAll}
+                  className="w-4 h-4 rounded"
+                  style={{ accentColor: 'var(--primary)', cursor: 'pointer' }}
+                />
+              </th>
               <th>Membro</th>
               <th>Contacto</th>
               <th>Departamento / Cargo</th>
@@ -160,7 +262,7 @@ const MembrosList = () => {
               ))
             ) : membros.length === 0 ? (
               <tr>
-                <td colSpan="5" className="text-center py-16">
+                <td colSpan="6" className="text-center py-16">
                   <div
                     className="flex flex-col items-center gap-3"
                     style={{ animation: 'fadeUp 0.3s ease-out' }}
@@ -192,7 +294,17 @@ const MembrosList = () => {
                 <tr
                   key={m.id}
                   style={{ animation: `fadeUp 0.3s ease-out ${idx * 30}ms both` }}
+                  className={selectedIds.includes(m.id) ? 'bg-indigo-500/5' : ''}
                 >
+                  <td className="text-center">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes(m.id)}
+                      onChange={() => handleToggleSelect(m.id)}
+                      className="w-4 h-4 rounded"
+                      style={{ accentColor: 'var(--primary)', cursor: 'pointer' }}
+                    />
+                  </td>
                   <td>
                     <div className="flex items-center gap-3">
                       <div
@@ -241,6 +353,9 @@ const MembrosList = () => {
                       </Link>
                       <Link to={`/membros/${m.id}/editar`} className="btn-icon" title="Editar">
                         <Edit2 size={16} style={{ color: 'var(--text-2)' }} />
+                      </Link>
+                      <Link to={`/membros/${m.id}/cartao`} className="btn-icon" title="Ver Cartão">
+                        <CreditCard size={16} style={{ color: '#8b5cf6' }} />
                       </Link>
                       <button
                         onClick={() => handleDelete(m.id, m.nome_completo)}

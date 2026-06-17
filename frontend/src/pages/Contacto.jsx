@@ -5,7 +5,7 @@ import {
     Building2, Menu, X, Lock, Globe, MessageSquare,
     ChevronRight, AlertCircle
 } from 'lucide-react';
-import logo from '../assets/logo.jpeg';
+import logo from '../assets/logo.png';
 import api from '../services/api';
 
 // ─── NAVBAR ─────────────────────────────────────────────────────────────────
@@ -423,11 +423,11 @@ const Contacto = () => {
             {/* ── FOOTER ──────────────────────────────────────────────────── */}
             <footer className="mt-auto" style={{ background: '#0a1628' }}>
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 text-center">
-                    <p className="text-slate-600 text-xs mb-1">
+                    <p className="text-slate-500 text-xs mb-1">
                         © {new Date().getFullYear()} SF-DGCI — Todos os direitos reservados
                     </p>
-                    <p className="text-slate-600 text-xs">
-                        Sindicato dos Funcionários da Direção-Geral dos Impostos e das Alfândegas
+                    <p className="text-slate-500 text-xs">
+                        República da Guiné-Bissau • Ministério das Finanças
                     </p>
                 </div>
             </footer>

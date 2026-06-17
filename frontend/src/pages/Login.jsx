@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Navigate } from 'react-router-dom';
+import { useNavigate, Navigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-hot-toast';
 import { Lock, Mail, ShieldCheck, Eye, EyeOff, ArrowRight } from 'lucide-react';
@@ -245,15 +245,13 @@ const Login = () => {
                 </div>
                 <span className="text-sm" style={{ color: 'var(--text-2)' }}>Lembrar sessão</span>
               </label>
-              <a
-                href="#"
-                className="text-sm font-medium transition-colors"
+              <Link
+                to="/esqueci-senha"
+                className="text-sm font-medium transition-opacity hover:opacity-75"
                 style={{ color: 'var(--primary)' }}
-                onMouseEnter={e => e.currentTarget.style.opacity = '0.75'}
-                onMouseLeave={e => e.currentTarget.style.opacity = '1'}
               >
                 Esqueceu a password?
-              </a>
+              </Link>
             </div>
 
             {/* Submit Button */}

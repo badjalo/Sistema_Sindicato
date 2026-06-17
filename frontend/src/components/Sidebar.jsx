@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
   LayoutDashboard, Users, CreditCard, DollarSign,
   FileText, MessageSquare, BarChart3, Building,
-  Settings, LogOut, ChevronLeft, ChevronRight, Landmark, Inbox
+  Settings, LogOut, ChevronLeft, ChevronRight, Landmark, Inbox, ShieldCheck
 } from 'lucide-react';
-import logo from '../assets/logo.jpeg';
+import logo from '../assets/logo.png';
 
 const menuGroups = [
   {
@@ -37,8 +37,9 @@ const menuGroups = [
   {
     label: 'Sistema',
     items: [
-      { path: '/configuracoes', icon: Settings, label: 'Configurações' },
-      { path: '/configuracao-slider', icon: LayoutDashboard, label: 'Configuração Slider' },
+      { path: '/utilizadores', icon: Users,       label: 'Utilizadores', adminOnly: true },
+      { path: '/auditoria',    icon: ShieldCheck, label: 'Auditoria',    adminOnly: true },
+      { path: '/configuracoes', icon: Settings,   label: 'Configurações' },
     ]
   },
 ];
@@ -138,6 +139,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
               )}
               <div className="space-y-0.5">
                 {group.items.map((item, ii) => {
+                  if (item.adminOnly && user?.perfil !== 'administrador') return null;
                   const Icon = item.icon;
                   const isActive = location.pathname.startsWith(item.path);
                   return (
@@ -252,30 +254,40 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
             background: 'rgba(0,0,0,0.15)',
           }}
         >
-          <div
-            className="flex items-center gap-3 p-2.5 rounded-xl mb-2"
+          <Link
+            to="/perfil"
+            className="flex items-center gap-3 p-2.5 rounded-xl mb-2 hover:bg-white/[0.08] transition-colors"
             style={{
               background: 'rgba(255,255,255,0.05)',
               border: '1px solid rgba(255,255,255,0.06)',
               overflow: 'hidden',
+              display: 'flex',
             }}
           >
-            <div
-              className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs flex-shrink-0 text-white"
-              style={{
-                background: 'linear-gradient(135deg,#f59e0b,#ef4444)',
-                boxShadow: '0 2px 8px rgba(245,158,11,0.4)',
-              }}
-            >
-              {user?.nome?.charAt(0) || 'U'}
-            </div>
+            {user?.avatar_url ? (
+              <img
+                src={user.avatar_url}
+                alt="Avatar"
+                className="w-8 h-8 rounded-lg object-cover flex-shrink-0"
+              />
+            ) : (
+              <div
+                className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs flex-shrink-0 text-white"
+                style={{
+                  background: 'linear-gradient(135deg,#f59e0b,#ef4444)',
+                  boxShadow: '0 2px 8px rgba(245,158,11,0.4)',
+                }}
+              >
+                {user?.nome?.charAt(0) || 'U'}
+              </div>
+            )}
             {!collapsed && (
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-white truncate">{user?.nome || 'Utilizador'}</p>
                 <p className="text-xs capitalize truncate" style={{ color: 'var(--sidebar-text)' }}>{user?.perfil || 'admin'}</p>
               </div>
             )}
-          </div>
+          </Link>
           <button
             onClick={logout}
             className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all hover:bg-red-500/15 hover:text-red-400 active:scale-95"

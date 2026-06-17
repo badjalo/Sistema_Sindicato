@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import api from '../services/api';
 import {
   Users, CreditCard, TrendingDown, TrendingUp,
   ArrowUpRight, ArrowDownRight, DollarSign, Activity,
-  PieChart as PieChartIcon, Heart, UserPlus, Calendar
+  PieChart as PieChartIcon, Heart, Calendar, Inbox,
+  AlertCircle, ChevronRight, Clock, MessageSquare
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip as RechartsTooltip, Legend, ResponsiveContainer,
-  PieChart, Pie, Cell, AreaChart, Area
+  PieChart, Pie, Cell
 } from 'recharts';
 
 const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
@@ -120,6 +122,7 @@ const SkeletonChart = ({ height = 280, delay = 0 }) => (
 const Dashboard = () => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('pagamentos'); // pagamentos | mensagens
 
   useEffect(() => {
     api.get('/dashboard/resumo')
@@ -163,7 +166,11 @@ const Dashboard = () => {
     </div>
   );
 
-  const { membros, quotas, financeiro, fluxo_mensal } = data;
+  const {
+    membros, quotas, financeiro, fluxo_mensal,
+    pagamentos_recentes = [], mensagens_pendentes = [],
+    total_mensagens_pendentes = 0, devedores_alerta = []
+  } = data;
   const saldoMes = Number(financeiro?.receitas_mes || 0) - Number(financeiro?.despesas_mes || 0);
 
   const formattedFluxo = (fluxo_mensal || []).map(item => ({
@@ -414,6 +421,198 @@ const Dashboard = () => {
         </div>
 
       </div>
+
+      {/* ── Nova Secção: Actividade Recente e Alertas de Dívida ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+
+        {/* Tab Panel: Actividade Recente (Pagamentos vs Mensagens) */}
+        <div className="card lg:col-span-2 space-y-4">
+          <div className="flex items-center justify-between border-b pb-3" style={{ borderColor: 'var(--border)' }}>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setActiveTab('pagamentos')}
+                className="text-sm font-bold pb-1.5 px-1 relative transition-all"
+                style={{
+                  color: activeTab === 'pagamentos' ? 'var(--primary)' : 'var(--text-3)'
+                }}
+              >
+                Últimos Pagamentos
+                {activeTab === 'pagamentos' && (
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full" style={{ background: 'var(--primary)' }} />
+                )}
+              </button>
+              <button
+                onClick={() => setActiveTab('mensagens')}
+                className="text-sm font-bold pb-1.5 px-1 relative transition-all flex items-center gap-1.5"
+                style={{
+                  color: activeTab === 'mensagens' ? 'var(--primary)' : 'var(--text-3)'
+                }}
+              >
+                Mensagens de Contacto
+                {total_mensagens_pendentes > 0 && (
+                  <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold text-white bg-red-500">
+                    {total_mensagens_pendentes}
+                  </span>
+                )}
+                {activeTab === 'mensagens' && (
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full" style={{ background: 'var(--primary)' }} />
+                )}
+              </button>
+            </div>
+            <Link
+              to={activeTab === 'pagamentos' ? '/quotas' : '/mensagens'}
+              className="text-xs font-semibold flex items-center gap-1 hover:opacity-75 transition-opacity"
+              style={{ color: 'var(--primary)' }}
+            >
+              Ver todos <ChevronRight size={13} />
+            </Link>
+          </div>
+
+          <div className="space-y-2 min-h-[220px]">
+            {activeTab === 'pagamentos' ? (
+              pagamentos_recentes.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-10" style={{ color: 'var(--text-3)' }}>
+                  <Inbox size={32} className="opacity-40 mb-2" />
+                  <p className="text-sm">Nenhum pagamento recente registado.</p>
+                </div>
+              ) : (
+                pagamentos_recentes.map((p) => (
+                  <div
+                    key={p.id}
+                    className="flex items-center justify-between p-3 rounded-xl transition-all hover:bg-white/[0.02] border border-transparent hover:border-white/[0.04]"
+                    style={{ background: 'var(--surface-2)' }}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="w-9 h-9 rounded-lg flex items-center justify-center text-xs font-extrabold text-white flex-shrink-0"
+                        style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)' }}
+                      >
+                        {p.numero_membro || '#'}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-semibold text-sm truncate max-w-[180px] sm:max-w-[320px]" style={{ color: 'var(--text-1)' }}>
+                          {p.nome_completo}
+                        </p>
+                        <p className="text-xs flex items-center gap-1" style={{ color: 'var(--text-3)' }}>
+                          <Clock size={11} />
+                          {MESES[p.mes - 1]}/{p.ano} · Quota
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-extrabold text-sm text-green-500">
+                        +{formatXOF(p.valor)} <span className="text-[10px] font-medium">XOF</span>
+                      </p>
+                      <p className="text-[10px] font-semibold text-white/50 bg-white/10 px-1.5 py-0.5 rounded inline-block mt-0.5">
+                        Pago
+                      </p>
+                    </div>
+                  </div>
+                ))
+              )
+            ) : (
+              mensagens_pendentes.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-10" style={{ color: 'var(--text-3)' }}>
+                  <MessageSquare size={32} className="opacity-40 mb-2" />
+                  <p className="text-sm">Sem mensagens pendentes de contacto.</p>
+                </div>
+              ) : (
+                mensagens_pendentes.map((m) => (
+                  <div
+                    key={m.id}
+                    className="flex items-center justify-between p-3 rounded-xl transition-all hover:bg-white/[0.02] border border-transparent hover:border-white/[0.04]"
+                    style={{ background: 'var(--surface-2)' }}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+                        style={{ background: 'rgba(99, 102, 241, 0.1)', color: '#6366f1' }}
+                      >
+                        <MessageSquare size={16} />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-semibold text-sm truncate max-w-[200px]" style={{ color: 'var(--text-1)' }}>
+                          {m.nome}
+                        </p>
+                        <p className="text-xs truncate max-w-[280px]" style={{ color: 'var(--text-3)' }}>
+                          {m.assunto}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[10px] text-yellow-500 font-bold bg-yellow-500/10 px-2 py-0.5 rounded-full inline-block">
+                        Pendente
+                      </p>
+                      <p className="text-[10px] mt-1 block" style={{ color: 'var(--text-3)' }}>
+                        {new Date(m.criado_em).toLocaleDateString('pt-PT')}
+                      </p>
+                    </div>
+                  </div>
+                ))
+              )
+            )}
+          </div>
+        </div>
+
+        {/* Alertas de Sistema / Devedores */}
+        <div className="card space-y-4">
+          <div className="flex items-center justify-between border-b pb-3" style={{ borderColor: 'var(--border)' }}>
+            <h3 className="font-bold text-sm flex items-center gap-1.5" style={{ color: 'var(--text-1)' }}>
+              <AlertCircle size={15} className="text-red-500" />
+              Alertas de Dívida
+            </h3>
+            <span className="text-[10px] font-bold bg-red-500/15 text-red-500 px-2 py-0.5 rounded-full">
+              Crítico (&gt;= 3 meses)
+            </span>
+          </div>
+
+          <div className="space-y-2.5">
+            {devedores_alerta.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center" style={{ color: 'var(--text-3)' }}>
+                <div className="w-10 h-10 rounded-full flex items-center justify-center mb-2" style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}>
+                  ✓
+                </div>
+                <p className="text-sm font-semibold" style={{ color: 'var(--text-2)' }}>Nenhum membro crítico</p>
+                <p className="text-xs mt-0.5">Todos os membros ativos estão com as quotas em dia.</p>
+              </div>
+            ) : (
+              devedores_alerta.map((d, index) => (
+                <div
+                  key={index}
+                  className="flex items-center justify-between p-2.5 rounded-lg"
+                  style={{ background: 'var(--surface-2)' }}
+                >
+                  <div className="min-w-0">
+                    <p className="font-bold text-sm truncate max-w-[150px]" style={{ color: 'var(--text-1)' }}>
+                      {d.nome_completo}
+                    </p>
+                    <p className="text-xs" style={{ color: 'var(--text-3)' }}>
+                      Membro {d.numero_membro || '#'}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <span className="px-2 py-1 rounded text-xs font-extrabold text-red-500 bg-red-500/10">
+                      {d.meses_divida} meses
+                    </span>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          <div className="pt-2">
+            <Link
+              to="/membros"
+              className="btn text-center block w-full py-2 text-xs font-bold rounded-lg border border-dashed transition-all hover:bg-white/[0.02]"
+              style={{ color: 'var(--text-2)', borderColor: 'var(--border)' }}
+            >
+              Gerir Membros no Diretório
+            </Link>
+          </div>
+        </div>
+
+      </div>
+
     </div>
   );
 };

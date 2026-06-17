@@ -5,7 +5,7 @@ import {
     ArrowRight, Calendar, ChevronLeft, Search, Filter, Download,
     File, FileText, Image, Music, Video, Archive, Menu, X, Lock
 } from 'lucide-react';
-import logo from '../assets/logo.jpeg';
+import logo from '../assets/logo.png';
 
 // ─── NAVBAR ─────────────────────────────────────────────────────────────────
 const Navbar = () => {
@@ -24,7 +24,7 @@ const Navbar = () => {
         { label: 'O Sindicato', to: '/sindicato' },
         { label: 'Notícias', to: '/noticias' },
         { label: 'Documentos', to: '/documentos-publicos' },
-        { label: 'Contacto', to: '/', hash: '#contact' },
+        { label: 'Contacto', to: '/contacto' },
     ];
 
     return (
@@ -51,26 +51,7 @@ const Navbar = () => {
                     {/* Desktop Links */}
                     <div className="hidden md:flex items-center gap-6">
                         {navLinks.map((l) => {
-                            const isActive = l.hash
-                                ? currentPath === '/' && window.location.hash === l.hash
-                                : currentPath === l.to;
-
-                            if (l.hash) {
-                                return (
-                                    <a
-                                        key={l.label}
-                                        href={currentPath === '/' ? l.hash : `${l.to}${l.hash}`}
-                                        className={`text-sm font-semibold transition-colors duration-200 px-3 py-1.5 rounded-xl ${
-                                            isActive
-                                                ? 'text-blue-600 bg-blue-50/50'
-                                                : 'text-gray-600 hover:text-[#1a2f5e] hover:bg-slate-50'
-                                        }`}
-                                    >
-                                        {l.label}
-                                    </a>
-                                );
-                            }
-
+                            const isActive = currentPath === l.to;
                             return (
                                 <Link
                                     key={l.label}
@@ -111,27 +92,7 @@ const Navbar = () => {
                 {menuOpen && (
                     <div className="md:hidden mt-4 pb-4 border-t border-gray-100 pt-4 space-y-2">
                         {navLinks.map((l) => {
-                            const isActive = l.hash
-                                ? currentPath === '/' && window.location.hash === l.hash
-                                : currentPath === l.to;
-
-                            if (l.hash) {
-                                return (
-                                    <a
-                                        key={l.label}
-                                        href={currentPath === '/' ? l.hash : `${l.to}${l.hash}`}
-                                        onClick={() => setMenuOpen(false)}
-                                        className={`block text-sm font-semibold p-2.5 rounded-lg ${
-                                            isActive
-                                                ? 'text-blue-600 bg-blue-50'
-                                                : 'text-gray-700 hover:text-[#1a2f5e] hover:bg-slate-50'
-                                        }`}
-                                    >
-                                        {l.label}
-                                    </a>
-                                );
-                            }
-
+                            const isActive = currentPath === l.to;
                             return (
                                 <Link
                                     key={l.label}
@@ -476,11 +437,11 @@ const DocumentsGrid = () => {
 // ─── FOOTER ─────────────────────────────────────────────────────────────────
 const Footer = () => (
     <footer style={{ background: '#0a1628' }}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center">
-            <p className="text-slate-600 text-xs mb-2">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 text-center">
+            <p className="text-slate-500 text-xs mb-1">
                 © {new Date().getFullYear()} SF-DGCI — Todos os direitos reservados
             </p>
-            <p className="text-slate-600 text-xs">
+            <p className="text-slate-500 text-xs">
                 República da Guiné-Bissau • Ministério das Finanças
             </p>
         </div>

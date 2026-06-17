@@ -4,6 +4,7 @@ const { query } = require('../config/database');
 const { authenticate } = require('../middleware/auth');
 
 // ─── Auto-criar tabela ────────────────────────────────────────────────────────
+let tableReady = false;
 const initTable = async () => {
     await query(`
         CREATE TABLE IF NOT EXISTS contacto_mensagens (
@@ -19,72 +20,91 @@ const initTable = async () => {
             criado_em   TIMESTAMPTZ NOT NULL DEFAULT NOW()
         )
     `);
+    tableReady = true;
 };
 initTable().catch(console.error);
 
+// Middleware para garantir que a tabela existe antes de processar pedidos
+router.use(async (req, res, next) => {
+    if (!tableReady) {
+        try { await initTable(); } catch (e) { /* já existe */ }
+    }
+    next();
+});
+
 // ─── PUBLIC: Enviar mensagem ──────────────────────────────────────────────────
 router.post('/', async (req, res) => {
-    const { nome, email, assunto, mensagem } = req.body;
-    if (!nome || !email || !assunto || !mensagem) {
-        return res.status(400).json({ success: false, message: 'Todos os campos são obrigatórios.' });
-    }
-    const result = await query(
-        `INSERT INTO contacto_mensagens (nome, email, assunto, mensagem)
-         VALUES ($1, $2, $3, $4) RETURNING id`,
-        [nome.trim(), email.trim().toLowerCase(), assunto.trim(), mensagem.trim()]
-    );
-
-    // Enviar notificação para todos os administradores ativos
     try {
-        const admins = await query("SELECT id FROM utilizadores WHERE perfil = 'administrador' AND ativo = true");
-        for (const admin of admins.rows) {
-            await query(
-                `INSERT INTO notificacoes (utilizador_id, titulo, mensagem, tipo, lida, link)
-                 VALUES ($1, $2, $3, $4, false, $5)`,
-                [
-                    admin.id,
-                    'Nova Mensagem de Contacto',
-                    `Recebeu uma nova mensagem de ${nome.trim()} (${email.trim().toLowerCase()}) sobre "${assunto.trim()}".`,
-                    'contacto',
-                    '/mensagens'
-                ]
-            );
+        const { nome, email, assunto, mensagem } = req.body;
+        if (!nome || !email || !assunto || !mensagem) {
+            return res.status(400).json({ success: false, message: 'Todos os campos são obrigatórios.' });
         }
-    } catch (err) {
-        console.error('Erro ao gerar notificação no backend:', err.message);
-    }
+        const result = await query(
+            `INSERT INTO contacto_mensagens (nome, email, assunto, mensagem)
+             VALUES ($1, $2, $3, $4) RETURNING id`,
+            [nome.trim(), email.trim().toLowerCase(), assunto.trim(), mensagem.trim()]
+        );
 
-    res.status(201).json({ success: true, message: 'Mensagem enviada com sucesso.', id: result.rows[0].id });
+        // Enviar notificação para todos os administradores ativos
+        try {
+            const admins = await query("SELECT id FROM utilizadores WHERE perfil = 'administrador' AND ativo = true");
+            for (const admin of admins.rows) {
+                await query(
+                    `INSERT INTO notificacoes (utilizador_id, titulo, mensagem, tipo, lida, link)
+                     VALUES ($1, $2, $3, $4, false, $5)`,
+                    [
+                        admin.id,
+                        'Nova Mensagem de Contacto',
+                        `Recebeu uma nova mensagem de ${nome.trim()} (${email.trim().toLowerCase()}) sobre "${assunto.trim()}".`,
+                        'contacto',
+                        '/mensagens'
+                    ]
+                );
+            }
+        } catch (err) {
+            console.error('Erro ao gerar notificação no backend:', err.message);
+        }
+
+        res.status(201).json({ success: true, message: 'Mensagem enviada com sucesso.', id: result.rows[0].id });
+    } catch (err) {
+        console.error('Erro ao guardar mensagem de contacto:', err.message);
+        res.status(500).json({ success: false, message: 'Erro interno do servidor. Tente novamente.' });
+    }
 });
 
 // ─── ADMIN: Listar mensagens ──────────────────────────────────────────────────
 router.get('/', authenticate, async (req, res) => {
-    const { estado, page = 1, limit = 20 } = req.query;
-    const offset = (page - 1) * limit;
+    try {
+        const { estado, page = 1, limit = 20 } = req.query;
+        const offset = (page - 1) * limit;
 
-    let where = '';
-    const params = [];
+        let where = '';
+        const params = [];
 
-    if (estado && estado !== 'todos') {
-        params.push(estado);
-        where = `WHERE estado = $${params.length}`;
+        if (estado && estado !== 'todos') {
+            params.push(estado);
+            where = `WHERE estado = $${params.length}`;
+        }
+
+        const [rows, total] = await Promise.all([
+            query(
+                `SELECT * FROM contacto_mensagens ${where} ORDER BY criado_em DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
+                [...params, limit, offset]
+            ),
+            query(`SELECT COUNT(*) FROM contacto_mensagens ${where}`, params)
+        ]);
+
+        res.json({
+            success: true,
+            data: rows.rows,
+            total: parseInt(total.rows[0].count),
+            page: parseInt(page),
+            totalPages: Math.ceil(total.rows[0].count / limit)
+        });
+    } catch (err) {
+        console.error('Erro ao listar mensagens:', err.message);
+        res.status(500).json({ success: false, message: 'Erro interno do servidor.' });
     }
-
-    const [rows, total] = await Promise.all([
-        query(
-            `SELECT * FROM contacto_mensagens ${where} ORDER BY criado_em DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
-            [...params, limit, offset]
-        ),
-        query(`SELECT COUNT(*) FROM contacto_mensagens ${where}`, params)
-    ]);
-
-    res.json({
-        success: true,
-        data: rows.rows,
-        total: parseInt(total.rows[0].count),
-        page: parseInt(page),
-        totalPages: Math.ceil(total.rows[0].count / limit)
-    });
 });
 
 // ─── ADMIN: Estatísticas ──────────────────────────────────────────────────────

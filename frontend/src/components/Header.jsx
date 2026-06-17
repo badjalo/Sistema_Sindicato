@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bell, Search, Moon, Sun, Menu, ChevronDown, LogOut, Settings, User, Check, Clock } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import logo from '../assets/logo.jpeg';
+import logo from '../assets/logo.png';
 import api from '../services/api';
 
 const Header = ({ toggleSidebar }) => {
@@ -234,15 +234,24 @@ const Header = ({ toggleSidebar }) => {
             className="flex items-center gap-2 px-2 py-1.5 rounded-lg transition-all hover:bg-[var(--surface-hover)] active:scale-95"
             style={{ transition: 'all 0.15s ease' }}
           >
-            <div
-              className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
-              style={{
-                background: 'linear-gradient(135deg, #f59e0b, #ef4444)',
-                boxShadow: '0 2px 8px rgba(245,158,11,0.35)',
-              }}
-            >
-              {user?.nome?.charAt(0) || 'U'}
-            </div>
+            {user?.avatar_url ? (
+              <img
+                src={user.avatar_url}
+                alt="Avatar"
+                className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.2)' }}
+              />
+            ) : (
+              <div
+                className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
+                style={{
+                  background: 'linear-gradient(135deg, #f59e0b, #ef4444)',
+                  boxShadow: '0 2px 8px rgba(245,158,11,0.35)',
+                }}
+              >
+                {user?.nome?.charAt(0) || 'U'}
+              </div>
+            )}
             <div className="hidden sm:block text-left">
               <p className="text-sm font-semibold leading-tight" style={{ color: 'var(--text-1)' }}>
                 {user?.nome?.split(' ')[0] || 'Utilizador'}
@@ -281,12 +290,20 @@ const Header = ({ toggleSidebar }) => {
                 }}
               >
                 <div className="flex items-center gap-3 mb-1">
-                  <div
-                    className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
-                    style={{ background: 'linear-gradient(135deg, #f59e0b, #ef4444)' }}
-                  >
-                    {user?.nome?.charAt(0) || 'U'}
-                  </div>
+                  {user?.avatar_url ? (
+                    <img
+                      src={user.avatar_url}
+                      alt="Avatar"
+                      className="w-9 h-9 rounded-full object-cover flex-shrink-0"
+                    />
+                  ) : (
+                    <div
+                      className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
+                      style={{ background: 'linear-gradient(135deg, #f59e0b, #ef4444)' }}
+                    >
+                      {user?.nome?.charAt(0) || 'U'}
+                    </div>
+                  )}
                   <div className="min-w-0">
                     <p className="font-semibold text-sm truncate" style={{ color: 'var(--text-1)' }}>{user?.nome}</p>
                     <p className="text-xs truncate" style={{ color: 'var(--text-3)' }}>{user?.email}</p>
@@ -294,6 +311,14 @@ const Header = ({ toggleSidebar }) => {
                 </div>
               </div>
               <div className="py-1.5">
+                <button
+                  onClick={() => { navigate('/perfil'); setShowUserMenu(false); }}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-all hover:bg-[var(--surface-hover)] active:scale-98"
+                  style={{ color: 'var(--text-2)' }}
+                >
+                  <User size={15} />
+                  O Meu Perfil
+                </button>
                 <button
                   onClick={() => { navigate('/configuracoes'); setShowUserMenu(false); }}
                   className="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-all hover:bg-[var(--surface-hover)] active:scale-98"
