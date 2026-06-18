@@ -144,6 +144,9 @@ const obter = async (req, res, next) => {
 /** POST /api/membros */
 const criar = async (req, res, next) => {
   try {
+    console.log('[CRIAR] ===== INICIANDO CRIAÇÃO =====');
+    console.log('[CRIAR] req.files:', !!req.files, req.files ? Object.keys(req.files) : 'N/A');
+
     let {
       nome_completo, sexo, data_nascimento, estado_civil: raw_estado_civil, nif,
       bi_passaporte, telefone, email, morada, funcao_cargo, cargo_id,
@@ -187,6 +190,15 @@ const criar = async (req, res, next) => {
     const foto_url = fotoFile ? `/uploads/fotos/${fotoFile.filename}` : null;
     const assinatura_url = assinaturaFile ? `/uploads/assinaturas/${assinaturaFile.filename}` : null;
 
+    console.log('[CRIAR] fotoFile:', !!fotoFile);
+    if (fotoFile) {
+      console.log('[CRIAR] fotoFile.filename:', fotoFile.filename);
+      console.log('[CRIAR] fotoFile.path:', fotoFile.path);
+      console.log('[CRIAR] foto_url construída:', foto_url);
+    } else {
+      console.log('[CRIAR] Nenhuma foto fornecida');
+    }
+
     // gerar número do membro se não foi fornecido
     const numero_membro = req.body.numero_membro && req.body.numero_membro.trim() ? req.body.numero_membro.trim() : await gerarNumeroMembro();
 
@@ -224,6 +236,13 @@ const criar = async (req, res, next) => {
         bi_passaporte, telefone, email, morada, funcao_cargo, cargo_id || null,
         departamento_id || null, data_admissao || new Date(), estado || 'ativo', observacoes, fundo_social === 'true' || fundo_social === true]
     );
+
+    console.log('[CRIAR] Membro criado:', {
+      id: result.rows[0].id,
+      numero_membro: result.rows[0].numero_membro,
+      nome: result.rows[0].nome_completo,
+      foto_url_na_bd: result.rows[0].foto_url
+    });
 
     res.status(201).json({ success: true, data: normalizeMemberData(result.rows[0]), message: 'Membro criado com sucesso' });
   } catch (err) {
