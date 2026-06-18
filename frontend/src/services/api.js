@@ -37,7 +37,7 @@ api.interceptors.response.use(
 );
 
 export const getBackendUrl = () => {
-  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+  const apiUrl = import.meta.env.VITE_API_URL || 'https://sistema-sindicato-nv3y.onrender.com/api';
   return apiUrl.replace(/\/api\/?$/, '');
 };
 
