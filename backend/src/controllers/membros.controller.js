@@ -144,97 +144,99 @@ const obter = async (req, res, next) => {
 /** POST /api/membros */
 const criar = async (req, res, next) => {
   try {
+    let {
+      nome_completo, sexo, data_nascimento, estado_civil: raw_estado_civil, nif,
+      bi_passaporte, telefone, email, morada, funcao_cargo, cargo_id,
+      departamento_id, data_admissao, estado, observacoes, fundo_social
+    } = req.body;
 
-    departamento_id, data_admissao, estado, observacoes, fundo_social
-  } = req.body;
+    nif = nif && nif.trim() !== '' ? nif.trim() : null;
+    email = email && email.trim() !== '' ? email.trim() : null;
 
-  nif = nif && nif.trim() !== '' ? nif.trim() : null;
-  email = email && email.trim() !== '' ? email.trim() : null;
+    const estado_civil = normalizeEstadoCivil(raw_estado_civil);
 
-  const estado_civil = normalizeEstadoCivil(raw_estado_civil);
+    if (!nome_completo || !sexo || !data_nascimento || !bi_passaporte) {
+      return res.status(400).json({ error: 'Campos obrigatórios: nome, sexo, data de nascimento, BI/Passaporte' });
+    }
 
-  if (!nome_completo || !sexo || !data_nascimento || !bi_passaporte) {
-    return res.status(400).json({ error: 'Campos obrigatórios: nome, sexo, data de nascimento, BI/Passaporte' });
-  }
-
-  // Verificar limite de quadros se departamento for selecionado e membro for ativo
-  if (departamento_id && (estado === 'ativo' || !estado)) {
-    const deptResult = await query(
-      `SELECT limite_quadros, nome FROM departamentos WHERE id = $1`,
-      [departamento_id]
-    );
-    if (deptResult.rows.length > 0) {
-      const { limite_quadros, nome: deptNome } = deptResult.rows[0];
-      if (limite_quadros && limite_quadros > 0) {
-        const countResult = await query(
-          `SELECT COUNT(*) FROM membros WHERE departamento_id = $1 AND estado = 'ativo'`,
-          [departamento_id]
-        );
-        const ativos = parseInt(countResult.rows[0].count);
-        if (ativos >= limite_quadros) {
-          return res.status(400).json({
-            error: `O departamento "${deptNome}" atingiu o limite máximo de membros ativos (${limite_quadros} vagas). Não é possível registar mais membros.`
-          });
+    // Verificar limite de quadros se departamento for selecionado e membro for ativo
+    if (departamento_id && (estado === 'ativo' || !estado)) {
+      const deptResult = await query(
+        `SELECT limite_quadros, nome FROM departamentos WHERE id = $1`,
+        [departamento_id]
+      );
+      if (deptResult.rows.length > 0) {
+        const { limite_quadros, nome: deptNome } = deptResult.rows[0];
+        if (limite_quadros && limite_quadros > 0) {
+          const countResult = await query(
+            `SELECT COUNT(*) FROM membros WHERE departamento_id = $1 AND estado = 'ativo'`,
+            [departamento_id]
+          );
+          const ativos = parseInt(countResult.rows[0].count);
+          if (ativos >= limite_quadros) {
+            return res.status(400).json({
+              error: `O departamento "${deptNome}" atingiu o limite máximo de membros ativos (${limite_quadros} vagas). Não é possível registar mais membros.`
+            });
+          }
         }
       }
     }
-  }
 
-  const fotoFile = req.files && req.files['foto'] && req.files['foto'][0];
-  const assinaturaFile = req.files && req.files['assinatura'] && req.files['assinatura'][0];
-  const foto_url = fotoFile ? `/uploads/fotos/${fotoFile.filename}` : null;
-  const assinatura_url = assinaturaFile ? `/uploads/assinaturas/${assinaturaFile.filename}` : null;
+    const fotoFile = req.files && req.files['foto'] && req.files['foto'][0];
+    const assinaturaFile = req.files && req.files['assinatura'] && req.files['assinatura'][0];
+    const foto_url = fotoFile ? `/uploads/fotos/${fotoFile.filename}` : null;
+    const assinatura_url = assinaturaFile ? `/uploads/assinaturas/${assinaturaFile.filename}` : null;
 
-  // gerar número do membro se não foi fornecido
-  const numero_membro = req.body.numero_membro && req.body.numero_membro.trim() ? req.body.numero_membro.trim() : await gerarNumeroMembro();
+    // gerar número do membro se não foi fornecido
+    const numero_membro = req.body.numero_membro && req.body.numero_membro.trim() ? req.body.numero_membro.trim() : await gerarNumeroMembro();
 
-  const duplicateCheck = await query(
-    `SELECT nif, bi_passaporte, email
+    const duplicateCheck = await query(
+      `SELECT nif, bi_passaporte, email
        FROM membros
        WHERE (nif IS NOT NULL AND nif <> '' AND nif = $1)
           OR bi_passaporte = $2
           OR (email IS NOT NULL AND email <> '' AND email = $3)
        LIMIT 1`,
-    [nif || '', bi_passaporte, email || '']
-  );
+      [nif || '', bi_passaporte, email || '']
+    );
 
-  if (duplicateCheck.rows.length) {
-    const duplicate = duplicateCheck.rows[0];
-    if (duplicate.bi_passaporte === bi_passaporte) {
-      return res.status(409).json({ error: 'BI/Passaporte já registado no sistema' });
+    if (duplicateCheck.rows.length) {
+      const duplicate = duplicateCheck.rows[0];
+      if (duplicate.bi_passaporte === bi_passaporte) {
+        return res.status(409).json({ error: 'BI/Passaporte já registado no sistema' });
+      }
+      if (duplicate.nif && nif && duplicate.nif === nif) {
+        return res.status(409).json({ error: 'NIF já registado no sistema' });
+      }
+      if (duplicate.email && email && duplicate.email === email) {
+        return res.status(409).json({ error: 'Email já registado no sistema' });
+      }
     }
-    if (duplicate.nif && nif && duplicate.nif === nif) {
-      return res.status(409).json({ error: 'NIF já registado no sistema' });
-    }
-    if (duplicate.email && email && duplicate.email === email) {
-      return res.status(409).json({ error: 'Email já registado no sistema' });
-    }
-  }
 
-  const result = await query(
-    `INSERT INTO membros 
+    const result = await query(
+      `INSERT INTO membros 
        (numero_membro, nome_completo, foto_url, assinatura_url, sexo, data_nascimento, estado_civil, nif,
         bi_passaporte, telefone, email, morada, funcao_cargo, cargo_id, departamento_id,
         data_admissao, estado, observacoes, fundo_social)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
        RETURNING *`,
-    [numero_membro, nome_completo, foto_url, assinatura_url, sexo, data_nascimento, estado_civil || 'solteiro', nif,
-      bi_passaporte, telefone, email, morada, funcao_cargo, cargo_id || null,
-      departamento_id || null, data_admissao || new Date(), estado || 'ativo', observacoes, fundo_social === 'true' || fundo_social === true]
-  );
+      [numero_membro, nome_completo, foto_url, assinatura_url, sexo, data_nascimento, estado_civil || 'solteiro', nif,
+        bi_passaporte, telefone, email, morada, funcao_cargo, cargo_id || null,
+        departamento_id || null, data_admissao || new Date(), estado || 'ativo', observacoes, fundo_social === 'true' || fundo_social === true]
+    );
 
-  res.status(201).json({ success: true, data: normalizeMemberData(result.rows[0]), message: 'Membro criado com sucesso' });
-} catch (err) {
-  if (err.code === '23505') {
-    const detail = err.detail || '';
-    let field = 'BI/Passaporte, NIF ou Email';
-    if (detail.includes('nif')) field = 'NIF';
-    else if (detail.includes('bi_passaporte')) field = 'BI/Passaporte';
-    else if (detail.includes('email')) field = 'Email';
-    return res.status(409).json({ error: `${field} já registado no sistema` });
+    res.status(201).json({ success: true, data: normalizeMemberData(result.rows[0]), message: 'Membro criado com sucesso' });
+  } catch (err) {
+    if (err.code === '23505') {
+      const detail = err.detail || '';
+      let field = 'BI/Passaporte, NIF ou Email';
+      if (detail.includes('nif')) field = 'NIF';
+      else if (detail.includes('bi_passaporte')) field = 'BI/Passaporte';
+      else if (detail.includes('email')) field = 'Email';
+      return res.status(409).json({ error: `${field} já registado no sistema` });
+    }
+    next(err);
   }
-  next(err);
-}
 };
 
 /** PUT /api/membros/:id */
