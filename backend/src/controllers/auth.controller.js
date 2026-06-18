@@ -73,7 +73,14 @@ const login = async (req, res, next) => {
 
     const cookieSameSite = process.env.COOKIE_SAMESITE || 'Strict';
     const isSameSiteNone = cookieSameSite.toLowerCase() === 'none';
-    const cookieSecure = isSameSiteNone || process.env.COOKIE_SECURE === 'true' || process.env.NODE_ENV === 'production';
+    
+    // Determinar se o cookie deve ser seguro (Secure)
+    let cookieSecure = isSameSiteNone; // SameSite=None requer obrigatoriamente Secure
+    if (process.env.COOKIE_SECURE !== undefined) {
+      cookieSecure = process.env.COOKIE_SECURE === 'true';
+    } else if (process.env.NODE_ENV === 'production') {
+      cookieSecure = true;
+    }
 
     // ✅ SEGURANÇA: Enviar token em httpOnly cookie (protege contra XSS)
     res.cookie('authToken', token, {
@@ -112,7 +119,14 @@ const logout = async (req, res, next) => {
 
     const cookieSameSite = process.env.COOKIE_SAMESITE || 'Strict';
     const isSameSiteNone = cookieSameSite.toLowerCase() === 'none';
-    const cookieSecure = isSameSiteNone || process.env.COOKIE_SECURE === 'true' || process.env.NODE_ENV === 'production';
+    
+    // Determinar se o cookie deve ser seguro (Secure)
+    let cookieSecure = isSameSiteNone; // SameSite=None requer obrigatoriamente Secure
+    if (process.env.COOKIE_SECURE !== undefined) {
+      cookieSecure = process.env.COOKIE_SECURE === 'true';
+    } else if (process.env.NODE_ENV === 'production') {
+      cookieSecure = true;
+    }
 
     // ✅ Limpar cookie httpOnly
     res.clearCookie('authToken', { 
