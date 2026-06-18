@@ -71,9 +71,10 @@ const login = async (req, res, next) => {
       [user.id, user.nome, 'LOGIN_SUCESSO', 'auth', req.ip, 200]
     ).catch(() => { });
 
-    const cookieSameSite = process.env.COOKIE_SAMESITE || 'Strict';
+    // ✅ SEGURANÇA: Configuração de cookie para cross-site (frontend + backend em domínios diferentes)
+    const cookieSameSite = process.env.COOKIE_SAMESITE || 'Lax';
     const isSameSiteNone = cookieSameSite.toLowerCase() === 'none';
-    
+
     // Determinar se o cookie deve ser seguro (Secure)
     let cookieSecure = isSameSiteNone; // SameSite=None requer obrigatoriamente Secure
     if (process.env.COOKIE_SECURE !== undefined) {
@@ -83,10 +84,11 @@ const login = async (req, res, next) => {
     }
 
     // ✅ SEGURANÇA: Enviar token em httpOnly cookie (protege contra XSS)
+    // SameSite=None permite cookies cross-site (necessário quando frontend e backend em domínios diferentes)
     res.cookie('authToken', token, {
-      httpOnly: true,      // Não acessível via JavaScript
-      secure: cookieSecure,  // HTTPS only
-      sameSite: isSameSiteNone ? 'none' : cookieSameSite,
+      httpOnly: true,      // Não acessível via JavaScript (protege contra XSS)
+      secure: cookieSecure, // HTTPS only em produção
+      sameSite: isSameSiteNone ? 'none' : cookieSameSite,  // 'None' permite cross-site com Secure
       maxAge: 24 * 60 * 60 * 1000,  // 24 horas
       path: '/'
     });
@@ -117,9 +119,9 @@ const logout = async (req, res, next) => {
       [req.user.id, req.user.nome]
     );
 
-    const cookieSameSite = process.env.COOKIE_SAMESITE || 'Strict';
+    const cookieSameSite = process.env.COOKIE_SAMESITE || 'Lax';
     const isSameSiteNone = cookieSameSite.toLowerCase() === 'none';
-    
+
     // Determinar se o cookie deve ser seguro (Secure)
     let cookieSecure = isSameSiteNone; // SameSite=None requer obrigatoriamente Secure
     if (process.env.COOKIE_SECURE !== undefined) {
@@ -129,7 +131,7 @@ const logout = async (req, res, next) => {
     }
 
     // ✅ Limpar cookie httpOnly
-    res.clearCookie('authToken', { 
+    res.clearCookie('authToken', {
       path: '/',
       secure: cookieSecure,
       sameSite: isSameSiteNone ? 'none' : cookieSameSite
@@ -222,7 +224,7 @@ const recuperarSenha = async (req, res, next) => {
       ALTER TABLE utilizadores 
       ADD COLUMN IF NOT EXISTS reset_token VARCHAR(10),
       ADD COLUMN IF NOT EXISTS reset_token_expira TIMESTAMPTZ
-    `).catch(() => {}); // Ignorar se já existe
+    `).catch(() => { }); // Ignorar se já existe
 
     // Guardar token no utilizador
     await query(
@@ -252,7 +254,7 @@ const recuperarSenha = async (req, res, next) => {
       `INSERT INTO auditoria_logs (utilizador_id, utilizador_nome, acao, entidade, ip_address)
        VALUES ($1, $2, 'RECUPERAR_SENHA', 'utilizadores', $3)`,
       [user.id, user.nome, req.ip]
-    ).catch(() => {});
+    ).catch(() => { });
 
     res.json({ success: true, message: 'Se o email existir, o administrador será notificado.' });
   } catch (err) {
@@ -299,7 +301,7 @@ const redefinirSenha = async (req, res, next) => {
       `INSERT INTO auditoria_logs (utilizador_id, utilizador_nome, acao, entidade, ip_address)
        VALUES ($1, $2, 'REDEFINIR_SENHA', 'utilizadores', $3)`,
       [user.id, user.nome, req.ip]
-    ).catch(() => {});
+    ).catch(() => { });
 
     res.json({ success: true, message: 'Senha redefinida com sucesso. Pode fazer login agora.' });
   } catch (err) {
@@ -330,7 +332,7 @@ const updateProfile = async (req, res, next) => {
       `INSERT INTO auditoria_logs (utilizador_id, utilizador_nome, acao, entidade)
        VALUES ($1, $2, 'UPDATE_PROFILE', 'utilizadores')`,
       [req.user.id, req.user.nome]
-    ).catch(() => {});
+    ).catch(() => { });
 
     res.json({ success: true, data: result.rows[0], message: 'Perfil atualizado com sucesso' });
   } catch (err) {
