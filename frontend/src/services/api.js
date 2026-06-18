@@ -37,7 +37,7 @@ api.interceptors.response.use(
 );
 
 export const getBackendUrl = () => {
-  const apiUrl = import.meta.env.VITE_API_URL || 'https://sistema-sindicato-nv3y.onrender.com/api';
+  const apiUrl = import.meta.env.VITE_API_URL || 'https://sf-dgci-backend.onrender.com/api';
   return apiUrl.replace(/\/api\/?$/, '');
 };
 
