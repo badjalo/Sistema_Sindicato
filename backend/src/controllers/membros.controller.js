@@ -225,7 +225,7 @@ const criar = async (req, res, next) => {
         departamento_id || null, data_admissao || new Date(), estado || 'ativo', observacoes, fundo_social === 'true' || fundo_social === true]
     );
 
-    res.status(201).json({ success: true, data: result.rows[0], message: 'Membro criado com sucesso' });
+    res.status(201).json({ success: true, data: normalizeMemberData(result.rows[0]), message: 'Membro criado com sucesso' });
   } catch (err) {
     if (err.code === '23505') {
       const detail = err.detail || '';

@@ -1,13 +1,15 @@
 const normalizeUploadUrl = (url) => {
     if (!url || typeof url !== 'string') return url;
     let normalized = url.replace(/^\/public\/uploads\//, '/uploads/');
-    
+
     // Se API_URL estiver definido, prefixamos o caminho para que o frontend encontre no backend
     const apiUrl = process.env.API_URL || '';
-    if (apiUrl) {
-        normalized = `${apiUrl.replace(/\/$/, '')}/${normalized.replace(/^\//, '')}`;
+    if (apiUrl && !normalized.startsWith('http')) {
+        // Extrair apenas o caminho (depois de /uploads)
+        const uploadPath = normalized.replace(/^\//, '');
+        normalized = `${apiUrl.replace(/\/$/, '')}/${uploadPath}`;
     }
-    
+
     // Adicionar cache-buster para forçar recarregamento de imagens atualizadas
     if (normalized && !normalized.includes('?v=')) {
         normalized += `?v=${Date.now()}`;
