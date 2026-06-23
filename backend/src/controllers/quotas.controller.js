@@ -119,6 +119,11 @@ const registarPagamento = async (req, res, next) => {
 
     let result;
     if (existing.rows.length) {
+      if (existing.rows[0].estado === 'pago') {
+        return res.status(400).json({ 
+          error: `Este membro já efetuou o pagamento da quota para o mês ${mes}/${ano}. Não é permitido duplicar o pagamento.` 
+        });
+      }
       result = await query(
         `UPDATE pagamentos SET estado = 'pago', valor = $1, data_pagamento = NOW(),
          metodo_pagamento = $2, referencia = $3, banco_id = $4, observacoes = $5, registado_por = $6
@@ -275,12 +280,16 @@ const registarPagamentoLote = async (req, res, next) => {
       const valor = 1000 + (hasFundo ? 4000 : 0);
 
       const existing = await query(
-        'SELECT id FROM pagamentos WHERE membro_id = $1 AND mes = $2 AND ano = $3',
+        'SELECT id, estado FROM pagamentos WHERE membro_id = $1 AND mes = $2 AND ano = $3',
         [membro_id, mes, ano]
       );
 
       let result;
       if (existing.rows.length) {
+        if (existing.rows[0].estado === 'pago') {
+          // Já está pago, ignora este membro do lote
+          continue;
+        }
         result = await query(
           `UPDATE pagamentos SET estado = 'pago', valor = $1, data_pagamento = NOW(),
            metodo_pagamento = $2, referencia = $3, banco_id = $4, observacoes = $5, registado_por = $6
