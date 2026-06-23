@@ -1,3 +1,4 @@
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './context/AuthContext';
@@ -36,6 +37,11 @@ import Utilizadores from './pages/Utilizadores';
 import Perfil from './pages/Perfil';
 
 function App() {
+  useEffect(() => {
+    const saved = localStorage.getItem('theme') || 'light';
+    document.documentElement.setAttribute('data-theme', saved);
+  }, []);
+
   return (
     <Router>
       <AuthProvider>

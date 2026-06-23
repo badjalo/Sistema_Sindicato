@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import api, { getBackendUrl } from '../services/api';
 import {
@@ -7,126 +7,80 @@ import {
   Building2, Phone, Mail, MapPin, Zap, Lock, Globe, Award, Calendar, Heart, Tag, Download
 } from 'lucide-react';
 import logo from '../assets/logo.png';
+import PublicNavbar from '../components/PublicNavbar';
 
-
-// ─── NAVBAR ────────────────────────────────────────────────────────────────
-const Navbar = ({ configs }) => {
-  const [scrolled, setScrolled] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const currentPath = window.location.pathname;
-
+// ─── ANIMATED COUNTER HOOK ───────────────────────────────────────────────────
+const useCountUp = (target, duration = 1800, enabled = false) => {
+  const [count, setCount] = useState(0);
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener('scroll', onScroll);
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
+    if (!enabled || typeof target !== 'number') return;
+    if (target === 0) { setCount(0); return; }
+    let start = null;
+    const step = (timestamp) => {
+      if (!start) start = timestamp;
+      const progress = Math.min((timestamp - start) / duration, 1);
+      // easeOutExpo
+      const ease = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
+      setCount(Math.floor(ease * target));
+      if (progress < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }, [target, duration, enabled]);
+  return count;
+};
 
-  const navLinks = [
-    { label: 'Início', to: '/' },
-    { label: 'O Sindicato', to: '/sindicato' },
-    { label: 'Notícias', to: '/noticias' },
-    { label: 'Documentos', to: '/documentos-publicos' },
-    { label: 'Contacto', to: '/contacto' },
-  ];
-
+// ─── ANIMATED STAT ITEM ──────────────────────────────────────────────────────
+const AnimatedStat = ({ rawValue, label, enabled }) => {
+  const isNumeric = typeof rawValue === 'number';
+  const animated = useCountUp(isNumeric ? rawValue : 0, 1800, enabled && isNumeric);
+  const displayValue = isNumeric ? animated.toLocaleString('pt-PT') : rawValue;
   return (
-    <nav
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled ? 'bg-white shadow-md py-2' : 'bg-white/95 backdrop-blur-sm py-3'
-      }`}
-    >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between">
-          {/* Logo */}
-          <Link to="/" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
-            <img src={logo} alt="SF-DGCI Logo" className="w-11 h-11 rounded-full object-cover ring-2 ring-yellow-400 shadow" />
-            <div className="leading-tight">
-              <p className="text-sm font-black text-[#1a2f5e] tracking-wide">{configs?.sigla || 'SF-DGCI'}</p>
-              <p className="text-[10px] text-gray-500 font-medium">Sistema de Gestão Sindical</p>
-            </div>
-          </Link>
-
-          {/* Desktop Links */}
-          <div className="hidden md:flex items-center gap-6">
-            {navLinks.map((l) => (
-              <Link
-                key={l.label}
-                to={l.to}
-                className={`text-sm font-semibold transition-colors duration-200 px-3 py-1.5 rounded-xl ${
-                  currentPath === l.to
-                    ? 'text-blue-600 bg-blue-50/50'
-                    : 'text-gray-600 hover:text-[#1a2f5e] hover:bg-slate-50'
-                }`}
-              >
-                {l.label}
-              </Link>
-            ))}
-          </div>
-
-          {/* CTA */}
-          <div className="hidden md:block">
-            <Link to="/login" className="inline-flex items-center gap-2 bg-[#1a2f5e] text-white text-sm font-bold px-5 py-2.5 rounded-xl hover:bg-[#0f1f42] transition-all duration-200 shadow-sm hover:shadow-md">
-              <Lock size={14} /> Entrar no Sistema
-            </Link>
-          </div>
-
-          {/* Mobile toggle */}
-          <button className="md:hidden text-gray-600 p-2 rounded-lg hover:bg-slate-100 transition-colors" onClick={() => setMenuOpen(!menuOpen)}>
-            {menuOpen ? <X size={22} /> : <Menu size={22} />}
-          </button>
-        </div>
-
-        {/* Mobile Menu */}
-        {menuOpen && (
-          <div className="md:hidden mt-4 pb-4 border-t border-gray-100 pt-4 space-y-2">
-            {navLinks.map((l) => (
-              <Link
-                key={l.label}
-                to={l.to}
-                onClick={() => setMenuOpen(false)}
-                className={`block text-sm font-semibold p-2.5 rounded-lg ${
-                  currentPath === l.to
-                    ? 'text-blue-600 bg-blue-50'
-                    : 'text-gray-700 hover:text-[#1a2f5e] hover:bg-slate-50'
-                }`}
-              >
-                {l.label}
-              </Link>
-            ))}
-            <div className="pt-2">
-              <Link to="/login" onClick={() => setMenuOpen(false)}
-                className="flex items-center justify-center gap-2 bg-[#1a2f5e] text-white text-sm font-bold w-full py-3 rounded-xl hover:bg-[#0f1f42] transition-colors">
-                <Lock size={14} /> Entrar no Sistema
-              </Link>
-            </div>
-          </div>
-        )}
-      </div>
-    </nav>
+    <div className="border border-white/15 bg-white/5 backdrop-blur-sm rounded-xl px-2 py-3 text-center flex flex-col items-center justify-center min-w-0">
+      <p className="text-sm sm:text-base font-black text-yellow-400 leading-tight break-words w-full tabular-nums">
+        {displayValue}
+      </p>
+      <p className="text-slate-400 text-[10px] mt-1 font-medium leading-tight">{label}</p>
+    </div>
   );
 };
 
+
+
+
 // ─── HERO ───────────────────────────────────────────────────────────────────
 const Hero = ({ configs }) => {
-  const formatCurrency = (val) => {
-    return new Intl.NumberFormat('pt-GW', {
-      style: 'currency',
-      currency: 'XOF',
-      maximumFractionDigits: 0
-    }).format(val);
-  };
+  const sectionRef = useRef(null);
+  const [inView, setInView] = useState(false);
 
-  const stats = [
-    { value: configs?.stats?.totalMembros ?? 0, label: 'Membros Registados' },
-    { value: configs?.stats?.totalFundoSocial ?? 0, label: 'Fundo Social' },
-    { value: formatCurrency(configs?.stats?.totalReceita ?? 0), label: 'Total de Receita' },
-    { value: formatCurrency(configs?.stats?.totalDespesa ?? 0), label: 'Total de Despesa' },
-    { value: formatCurrency(configs?.stats?.saldoDisponivel ?? 0), label: 'Saldo Disponível' },
-    { value: '100%', label: 'Seguro & Digital' },
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setInView(true); observer.disconnect(); } },
+      { threshold: 0.3 }
+    );
+    if (sectionRef.current) observer.observe(sectionRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  const rawStats = [
+    { rawValue: configs?.stats?.totalMembros ?? 0, label: 'Membros Registados' },
+    { rawValue: configs?.stats?.totalFundoSocial ?? 0, label: 'No Fundo Social' },
+    {
+      rawValue: new Intl.NumberFormat('pt-GW', { style: 'currency', currency: 'XOF', maximumFractionDigits: 0 }).format(configs?.stats?.totalReceita ?? 0),
+      label: 'Total de Receita'
+    },
+    {
+      rawValue: new Intl.NumberFormat('pt-GW', { style: 'currency', currency: 'XOF', maximumFractionDigits: 0 }).format(configs?.stats?.totalDespesa ?? 0),
+      label: 'Total de Despesa'
+    },
+    {
+      rawValue: new Intl.NumberFormat('pt-GW', { style: 'currency', currency: 'XOF', maximumFractionDigits: 0 }).format(configs?.stats?.saldoDisponivel ?? 0),
+      label: 'Saldo Disponível'
+    },
+    { rawValue: '100%', label: 'Seguro & Digital' },
   ];
 
   return (
-    <section className="relative min-h-screen flex flex-col justify-center overflow-hidden pt-20">
+    <section ref={sectionRef} className="relative min-h-screen flex flex-col justify-center overflow-hidden pt-20">
       {/* Background gradient */}
       <div
         className="absolute inset-0 z-0"
@@ -192,16 +146,10 @@ const Hero = ({ configs }) => {
           </Link>
         </div>
 
-        {/* Stats bar */}
+        {/* Animated stats bar */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 w-full max-w-5xl">
-          {stats.map((s) => (
-            <div
-              key={s.label}
-              className="border border-white/15 bg-white/5 backdrop-blur-sm rounded-xl px-2 py-3 text-center flex flex-col items-center justify-center min-w-0"
-            >
-              <p className="text-sm sm:text-base font-black text-yellow-400 leading-tight break-words w-full">{s.value}</p>
-              <p className="text-slate-400 text-[10px] mt-1 font-medium leading-tight">{s.label}</p>
-            </div>
+          {rawStats.map((s) => (
+            <AnimatedStat key={s.label} rawValue={s.rawValue} label={s.label} enabled={inView} />
           ))}
         </div>
       </div>
@@ -232,6 +180,12 @@ const NewsSection = () => {
       setLoadingNews(true);
       const response = await api.get('/comunicados/publicos');
       if (response.data.success && response.data.data) {
+        const BACKEND = getBackendUrl();
+        const buildImgUrl = (url) => {
+          if (!url) return null;
+          if (url.startsWith('http')) return url;
+          return `${BACKEND}${url}`;
+        };
         const newsData = response.data.data.slice(0, 3).map(item => ({
           id: item.id,
           title: item.titulo,
@@ -241,6 +195,8 @@ const NewsSection = () => {
           tipo: item.tipo,
           date: item.data_publicacao || item.criado_em,
           author: item.autor_nome || 'Administração',
+          foto_url: buildImgUrl(item.foto_url),
+          nome_falecido: item.nome_falecido || null,
         }));
         setNews(newsData);
       }
@@ -287,15 +243,15 @@ const NewsSection = () => {
   };
 
   return (
-    <section id="news" className="py-24 bg-white">
+    <section id="news" className="py-24 bg-white dark:bg-[#0d1117]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
           <div>
-            <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 text-xs font-bold px-4 py-1.5 rounded-full mb-3 tracking-widest uppercase">
+            <div className="inline-flex items-center gap-2 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-xs font-bold px-4 py-1.5 rounded-full mb-3 tracking-widest uppercase">
               <Bell size={12} /> Últimas Notícias
             </div>
-            <h2 className="text-3xl sm:text-4xl font-black text-[#0f1f42]">Mantenha-se Informado</h2>
-            <p className="text-gray-500 text-sm mt-2 max-w-md">Acompanhe os comunicados e eventos do sindicato.</p>
+            <h2 className="text-3xl sm:text-4xl font-black text-[#0f1f42] dark:text-white">Mantenha-se Informado</h2>
+            <p className="text-gray-500 dark:text-gray-400 text-sm mt-2 max-w-md">Acompanhe os comunicados e eventos do sindicato.</p>
           </div>
           <Link to="/noticias" className="inline-flex items-center gap-2 text-[#1a2f5e] font-bold text-sm hover:text-yellow-600 transition-colors whitespace-nowrap">
             Ver todas <ArrowRight size={16} />
@@ -312,26 +268,45 @@ const NewsSection = () => {
             <div
               key={item.id}
               onClick={() => setSelectedNews(item)}
-              className="group bg-white border border-gray-100 rounded-2xl overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col"
+              className="group bg-white dark:bg-[#161b27] border border-gray-100 dark:border-slate-800 rounded-2xl overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col"
             >
               <div className={`h-1.5 w-full ${getBarColor(item.tipo)}`} />
-              <div className="bg-gradient-to-br from-[#1a2f5e]/4 to-yellow-400/4 h-20 flex items-center justify-center border-b border-gray-100/30">
-                <div className="p-2 bg-white rounded-full shadow-sm border border-gray-100/50 group-hover:scale-105 transition-transform duration-300">
-                  <Tag size={18} className="text-[#1a2f5e]/40" />
+              {/* Imagem de capa ou placeholder */}
+              {item.foto_url ? (
+                <div className="relative w-full h-36 overflow-hidden bg-gray-100">
+                  <img
+                    src={item.foto_url}
+                    alt={item.nome_falecido || item.title}
+                    className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ${
+                      item.tipo === 'obito' ? 'filter grayscale' : ''
+                    }`}
+                    onError={(e) => { e.target.parentElement.style.display = 'none'; }}
+                  />
+                  {item.tipo === 'obito' && item.nome_falecido && (
+                    <div className="absolute inset-0 bg-gradient-to-t from-gray-900/60 to-transparent flex items-end p-3">
+                      <p className="text-white text-xs font-semibold italic">Em memória de: {item.nome_falecido}</p>
+                    </div>
+                  )}
                 </div>
-              </div>
+              ) : (
+                <div className="bg-gradient-to-br from-[#1a2f5e]/4 to-yellow-400/4 h-20 flex items-center justify-center border-b border-gray-100/30 dark:border-slate-800/30">
+                  <div className="p-2 bg-white dark:bg-slate-800 rounded-full shadow-sm border border-gray-100/50 dark:border-slate-700 group-hover:scale-105 transition-transform duration-300">
+                    <Tag size={18} className="text-[#1a2f5e]/40 dark:text-blue-400/60" />
+                  </div>
+                </div>
+              )}
               <div className="p-5 flex-1 flex flex-col">
                 <div className="flex items-center gap-2 mb-3">
                   <span className={`inline-block px-2 py-0.5 text-[9px] font-extrabold tracking-wide rounded-md ${getCategoryStyle(item.tipo)}`}>{item.category}</span>
-                  <span className="text-[10px] text-gray-400 flex items-center gap-1"><Calendar size={10} />{formatDate(item.date)}</span>
+                  <span className="text-[10px] text-gray-400 dark:text-gray-500 flex items-center gap-1"><Calendar size={10} />{formatDate(item.date)}</span>
                 </div>
-                <h3 className="text-sm font-bold text-[#0f1f42] mb-2 group-hover:text-yellow-600 transition-colors line-clamp-2 leading-snug">{item.title}</h3>
-                <p className="text-gray-500 text-xs mb-4 line-clamp-2 flex-1 leading-relaxed">{item.excerpt}</p>
-                <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-                  <span className="text-[10px] text-gray-400 font-medium truncate mr-2">{item.author}</span>
+                <h3 className="text-sm font-bold text-[#0f1f42] dark:text-white mb-2 group-hover:text-yellow-600 dark:group-hover:text-yellow-400 transition-colors line-clamp-2 leading-snug">{item.title}</h3>
+                <p className="text-gray-500 dark:text-gray-400 text-xs mb-4 line-clamp-2 flex-1 leading-relaxed">{item.excerpt}</p>
+                <div className="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-slate-800">
+                  <span className="text-[10px] text-gray-400 dark:text-gray-500 font-medium truncate mr-2">{item.author}</span>
                   <button
                     onClick={(e) => toggleLike(e, item.id)}
-                    className={`flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full transition-all duration-200 ${likedIds.includes(item.id) ? 'bg-red-50 text-red-500' : 'text-gray-400 hover:text-red-400 hover:bg-red-50'}`}
+                    className={`flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full transition-all duration-200 ${likedIds.includes(item.id) ? 'bg-red-50 dark:bg-red-900/30 text-red-500' : 'text-gray-400 hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20'}`}
                   >
                     <Heart size={13} className={likedIds.includes(item.id) ? 'fill-red-500 text-red-500' : ''} />
                     {likeCounts[item.id] || 0}
@@ -348,7 +323,7 @@ const NewsSection = () => {
 
         {selectedNews && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setSelectedNews(null)}>
-            <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="bg-white dark:bg-[#161b27] rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
               <div className={`h-2 w-full rounded-t-2xl ${getBarColor(selectedNews.tipo)}`} />
               <div className="sticky top-0 bg-gradient-to-r from-[#1a2f5e] to-[#0f1f42] p-6 text-white flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
@@ -361,10 +336,32 @@ const NewsSection = () => {
                 </div>
                 <button onClick={() => setSelectedNews(null)} className="text-white/60 hover:text-white hover:bg-white/10 p-2 rounded-lg transition-colors flex-shrink-0 text-lg">✕</button>
               </div>
+
+              {/* Imagem de destaque no modal */}
+              {selectedNews.foto_url && (
+                <div className="relative w-full overflow-hidden bg-gray-100 dark:bg-slate-800">
+                  <img
+                    src={selectedNews.foto_url}
+                    alt={selectedNews.nome_falecido || selectedNews.title}
+                    className={`w-full max-h-72 object-cover ${selectedNews.tipo === 'obito' ? 'filter grayscale' : ''}`}
+                    onError={(e) => { e.target.parentElement.style.display = 'none'; }}
+                  />
+                  {selectedNews.tipo === 'obito' && selectedNews.nome_falecido && (
+                    <div className="absolute inset-0 bg-gradient-to-t from-gray-900/70 to-transparent flex items-end p-4">
+                      <div className="flex items-center gap-2">
+                        <span className="text-white text-sm font-semibold italic">
+                          Em memória de: <strong>{selectedNews.nome_falecido}</strong>
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div className="p-6">
-                <p className="text-gray-700 whitespace-pre-wrap leading-relaxed text-sm">{selectedNews.content}</p>
+                <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed text-sm">{selectedNews.content}</p>
               </div>
-              <div className="sticky bottom-0 bg-gray-50 p-4 border-t border-gray-100 flex items-center justify-between rounded-b-2xl">
+              <div className="sticky bottom-0 bg-gray-50 dark:bg-[#0d1117] p-4 border-t border-gray-100 dark:border-slate-800 flex items-center justify-between rounded-b-2xl">
                 <button
                   onClick={(e) => toggleLike(e, selectedNews.id)}
                   className={`flex items-center gap-2 text-sm font-semibold px-4 py-2 rounded-full transition-all duration-200 ${likedIds.includes(selectedNews.id) ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-500 hover:bg-red-50 hover:text-red-500'}`}
@@ -473,15 +470,15 @@ const DocumentsSection = () => {
   };
 
   return (
-    <section id="documents" className="py-24 bg-gradient-to-b from-gray-50 to-white">
+    <section id="documents" className="py-24 bg-gradient-to-b from-gray-50 dark:from-[#161b27] to-white dark:to-[#0d1117]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
           <div>
-            <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 text-xs font-bold px-4 py-1.5 rounded-full mb-3 tracking-widest uppercase">
+            <div className="inline-flex items-center gap-2 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-xs font-bold px-4 py-1.5 rounded-full mb-3 tracking-widest uppercase">
               <Download size={12} /> Biblioteca Digital
             </div>
-            <h2 className="text-3xl sm:text-4xl font-black text-[#0f1f42]">Documentos Recentes</h2>
-            <p className="text-gray-500 text-sm mt-2 max-w-md">Aceda rapidamente aos estatutos, atas e circulares oficiais do sindicato.</p>
+            <h2 className="text-3xl sm:text-4xl font-black text-[#0f1f42] dark:text-white">Documentos Recentes</h2>
+            <p className="text-gray-500 dark:text-gray-400 text-sm mt-2 max-w-md">Aceda rapidamente aos estatutos, atas e circulares oficiais do sindicato.</p>
           </div>
           <Link to="/documentos-publicos" className="inline-flex items-center gap-2 text-[#1a2f5e] font-bold text-sm hover:text-yellow-600 transition-colors whitespace-nowrap">
             Ver todos <ArrowRight size={16} />
@@ -498,10 +495,10 @@ const DocumentsSection = () => {
             latestDocuments.map((doc) => (
               <div
                 key={doc.id}
-                className="group bg-white border border-gray-100 rounded-2xl overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col"
+                className="group bg-white dark:bg-[#161b27] border border-gray-100 dark:border-slate-800 rounded-2xl overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col"
               >
                 <div className="bg-gradient-to-br from-[#1a2f5e]/8 to-yellow-400/8 p-6 flex items-start justify-between">
-                  <div className="p-3 bg-white rounded-xl shadow-sm border border-gray-100/50">
+                  <div className="p-3 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-100/50 dark:border-slate-700">
                     {getFileIcon(doc.type)}
                   </div>
                   <span className="inline-block px-2.5 py-1 bg-yellow-400/10 text-yellow-800 text-[10px] font-bold rounded-full">
@@ -510,17 +507,17 @@ const DocumentsSection = () => {
                 </div>
 
                 <div className="p-5 flex-1 flex flex-col">
-                  <h3 className="text-sm font-bold text-[#0f1f42] mb-1 group-hover:text-yellow-600 transition-colors line-clamp-2 leading-snug">
+                  <h3 className="text-sm font-bold text-[#0f1f42] dark:text-white mb-1 group-hover:text-yellow-600 dark:group-hover:text-yellow-400 transition-colors line-clamp-2 leading-snug">
                     {doc.name}
                   </h3>
-                  <p className="text-gray-500 text-xs mb-4 line-clamp-2 flex-1 leading-relaxed">
+                  <p className="text-gray-500 dark:text-gray-400 text-xs mb-4 line-clamp-2 flex-1 leading-relaxed">
                     {doc.description || 'Sem descrição adicional.'}
                   </p>
 
-                  <div className="space-y-2 text-[11px] text-gray-400 mb-4 pt-3 border-t border-gray-100">
+                  <div className="space-y-2 text-[11px] text-gray-400 dark:text-gray-500 mb-4 pt-3 border-t border-gray-100 dark:border-slate-800">
                     <div className="flex justify-between">
-                      <span>Tamanho: <strong className="text-gray-600">{doc.size}</strong></span>
-                      <span>Tipo: <strong className="text-gray-600 uppercase">{doc.type}</strong></span>
+                      <span>Tamanho: <strong className="text-gray-600 dark:text-gray-300">{doc.size}</strong></span>
+                      <span>Tipo: <strong className="text-gray-600 dark:text-gray-300 uppercase">{doc.type}</strong></span>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <Calendar size={11} />
@@ -698,8 +695,8 @@ const LandingPage = () => {
   }, []);
 
   return (
-    <div className="font-sans antialiased">
-      <Navbar configs={configs} />
+    <div className="font-sans antialiased bg-white dark:bg-[#0d1117] text-slate-800 dark:text-[#e6edf4] transition-colors duration-200">
+      <PublicNavbar />
 
       <Hero configs={configs} />
       <NewsSection />

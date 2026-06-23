@@ -7,91 +7,7 @@ import {
 } from 'lucide-react';
 import logo from '../assets/logo.png';
 import api from '../services/api';
-
-// ─── NAVBAR ─────────────────────────────────────────────────────────────────
-const Navbar = () => {
-    const [scrolled, setScrolled] = useState(false);
-    const [menuOpen, setMenuOpen] = useState(false);
-    const currentPath = window.location.pathname;
-
-    useEffect(() => {
-        const onScroll = () => setScrolled(window.scrollY > 20);
-        window.addEventListener('scroll', onScroll);
-        return () => window.removeEventListener('scroll', onScroll);
-    }, []);
-
-    const navLinks = [
-        { label: 'Início', to: '/' },
-        { label: 'O Sindicato', to: '/sindicato' },
-        { label: 'Notícias', to: '/noticias' },
-        { label: 'Documentos', to: '/documentos-publicos' },
-        { label: 'Contacto', to: '/contacto' },
-    ];
-
-    return (
-        <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-            scrolled ? 'bg-white shadow-md py-2' : 'bg-white/95 backdrop-blur-sm py-3'
-        }`}>
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex items-center justify-between">
-                    <Link to="/" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
-                        <img src={logo} alt="SF-DGCI Logo" className="w-11 h-11 rounded-full object-cover ring-2 ring-yellow-400 shadow" />
-                        <div className="leading-tight">
-                            <p className="text-sm font-black text-[#1a2f5e] tracking-wide">SF-DGCI</p>
-                            <p className="text-[10px] text-gray-500 font-medium">Sistema de Gestão Sindical</p>
-                        </div>
-                    </Link>
-
-                    <div className="hidden md:flex items-center gap-6">
-                        {navLinks.map((l) => {
-                            const isActive = currentPath === l.to;
-                            return (
-                                <Link key={l.label} to={l.to}
-                                    className={`text-sm font-semibold transition-colors duration-200 px-3 py-1.5 rounded-xl ${
-                                        isActive ? 'text-blue-600 bg-blue-50/50' : 'text-gray-600 hover:text-[#1a2f5e] hover:bg-slate-50'
-                                    }`}>
-                                    {l.label}
-                                </Link>
-                            );
-                        })}
-                    </div>
-
-                    <div className="hidden md:block">
-                        <Link to="/login" className="inline-flex items-center gap-2 bg-[#1a2f5e] text-white text-sm font-bold px-5 py-2.5 rounded-xl hover:bg-[#0f1f42] transition-all duration-200 shadow-sm hover:shadow-md">
-                            <Lock size={14} /> Entrar no Sistema
-                        </Link>
-                    </div>
-
-                    <button className="md:hidden text-gray-600 p-2 rounded-lg hover:bg-slate-100 transition-colors" onClick={() => setMenuOpen(!menuOpen)}>
-                        {menuOpen ? <X size={22} /> : <Menu size={22} />}
-                    </button>
-                </div>
-
-                {menuOpen && (
-                    <div className="md:hidden mt-4 pb-4 border-t border-gray-100 pt-4 space-y-2">
-                        {navLinks.map((l) => {
-                            const isActive = currentPath === l.to;
-                            return (
-                                <Link key={l.label} to={l.to} onClick={() => setMenuOpen(false)}
-                                    className={`block text-sm font-semibold p-2.5 rounded-lg ${
-                                        isActive ? 'text-blue-600 bg-blue-50' : 'text-gray-700 hover:text-[#1a2f5e] hover:bg-slate-50'
-                                    }`}>
-                                    {l.label}
-                                </Link>
-                            );
-                        })}
-                        <div className="pt-2">
-                            <Link to="/login" onClick={() => setMenuOpen(false)}
-                                className="flex items-center justify-center gap-2 bg-[#1a2f5e] text-white text-sm font-bold w-full py-3 rounded-xl hover:bg-[#0f1f42] transition-colors">
-                                <Lock size={14} /> Entrar no Sistema
-                            </Link>
-                        </div>
-                    </div>
-                )}
-            </div>
-        </nav>
-    );
-};
+import PublicNavbar from '../components/PublicNavbar';
 
 // ─── HERO ────────────────────────────────────────────────────────────────────
 const HeroSection = () => (
@@ -118,20 +34,20 @@ const HeroSection = () => (
 
 // ─── CONTACT CARD ────────────────────────────────────────────────────────────
 const ContactCard = ({ icon: Icon, title, lines, color, href }) => (
-    <div className="group bg-white rounded-2xl border border-gray-100 p-6 shadow-sm hover:shadow-lg hover:border-blue-100 transition-all duration-300">
+    <div className="group bg-white dark:bg-[#161b27] rounded-2xl border border-gray-100 dark:border-slate-800 p-6 shadow-sm hover:shadow-lg hover:border-blue-100 dark:hover:border-blue-900 transition-all duration-300">
         <div className={`w-12 h-12 rounded-xl ${color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
             <Icon size={22} className="text-white" />
         </div>
-        <h3 className="font-bold text-[#0f1f42] text-base mb-2">{title}</h3>
+        <h3 className="font-bold text-[#0f1f42] dark:text-white text-base mb-2">{title}</h3>
         <div className="space-y-1">
             {lines.map((line, i) =>
                 href ? (
                     <a key={i} href={`${href}${line}`}
-                        className="block text-sm text-gray-500 hover:text-blue-600 transition-colors">
+                        className="block text-sm text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
                         {line}
                     </a>
                 ) : (
-                    <p key={i} className="text-sm text-gray-500">{line}</p>
+                    <p key={i} className="text-sm text-gray-500 dark:text-gray-400">{line}</p>
                 )
             )}
         </div>
@@ -167,16 +83,16 @@ const ContactForm = () => {
     if (sent) {
         return (
             <div className="flex flex-col items-center justify-center text-center py-16 px-8">
-                <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mb-6">
+                <div className="w-20 h-20 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-6">
                     <CheckCircle size={40} className="text-green-500" />
                 </div>
-                <h3 className="text-2xl font-black text-[#0f1f42] mb-3">Mensagem Enviada!</h3>
-                <p className="text-gray-500 text-sm max-w-sm mb-8">
+                <h3 className="text-2xl font-black text-[#0f1f42] dark:text-white mb-3">Mensagem Enviada!</h3>
+                <p className="text-gray-500 dark:text-gray-400 text-sm max-w-sm mb-8">
                     Obrigado pela sua mensagem. A nossa equipa entrará em contacto brevemente.
                 </p>
                 <button
                     onClick={() => setSent(false)}
-                    className="inline-flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-800 transition-colors"
+                    className="inline-flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
                 >
                     Enviar outra mensagem <ChevronRight size={16} />
                 </button>
@@ -188,7 +104,7 @@ const ContactForm = () => {
         <form onSubmit={handleSubmit} className="space-y-5">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div>
-                    <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">
+                    <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">
                         Nome Completo *
                     </label>
                     <input
@@ -198,11 +114,11 @@ const ContactForm = () => {
                         onChange={handleChange}
                         required
                         placeholder="Ex: João Silva"
-                        className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-slate-50 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-400 transition-all"
+                        className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-400 transition-all"
                     />
                 </div>
                 <div>
-                    <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">
+                    <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">
                         Email *
                     </label>
                     <input
@@ -212,13 +128,13 @@ const ContactForm = () => {
                         onChange={handleChange}
                         required
                         placeholder="exemplo@email.com"
-                        className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-slate-50 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-400 transition-all"
+                        className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-400 transition-all"
                     />
                 </div>
             </div>
 
             <div>
-                <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">
+                <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">
                     Assunto *
                 </label>
                 <div className="relative">
@@ -227,7 +143,7 @@ const ContactForm = () => {
                         value={form.assunto}
                         onChange={handleChange}
                         required
-                        className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-slate-50 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-400 transition-all appearance-none"
+                        className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-400 transition-all appearance-none"
                     >
                         <option value="">Selecione o assunto...</option>
                         <option value="informacao">Pedido de Informação</option>
@@ -242,7 +158,7 @@ const ContactForm = () => {
             </div>
 
             <div>
-                <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">
+                <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">
                     Mensagem *
                 </label>
                 <textarea
@@ -252,7 +168,7 @@ const ContactForm = () => {
                     required
                     rows={5}
                     placeholder="Escreva a sua mensagem aqui..."
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-slate-50 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-400 transition-all resize-none"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm text-gray-800 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-400 transition-all resize-none"
                 />
             </div>
 
@@ -320,8 +236,8 @@ const Contacto = () => {
     ];
 
     return (
-        <div className="min-h-screen bg-slate-50/50 flex flex-col font-sans antialiased text-slate-800">
-            <Navbar />
+        <div className="min-h-screen bg-slate-50/50 dark:bg-[#0d1117] flex flex-col font-sans antialiased text-slate-800 dark:text-[#e6edf4] transition-colors duration-200">
+            <PublicNavbar />
             <HeroSection />
 
             {/* ── CONTACT CARDS ──────────────────────────────────────────── */}
@@ -339,13 +255,13 @@ const Contacto = () => {
 
                     {/* Left: Form */}
                     <div className="lg:col-span-7">
-                        <div className="bg-white rounded-2xl border border-gray-100 shadow-xl p-8">
+                        <div className="bg-white dark:bg-[#161b27] rounded-2xl border border-gray-100 dark:border-slate-800 shadow-xl p-8">
                             <div className="mb-8">
-                                <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 text-xs font-bold px-3 py-1 rounded-full mb-3">
+                                <div className="inline-flex items-center gap-2 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-xs font-bold px-3 py-1 rounded-full mb-3">
                                     <MessageSquare size={12} /> Formulário de Contacto
                                 </div>
-                                <h2 className="text-2xl font-black text-[#0f1f42] mb-2">Envie-nos uma Mensagem</h2>
-                                <p className="text-gray-400 text-sm">
+                                <h2 className="text-2xl font-black text-[#0f1f42] dark:text-white mb-2">Envie-nos uma Mensagem</h2>
+                                <p className="text-gray-400 dark:text-gray-500 text-sm">
                                     Preencha o formulário e responderemos o mais breve possível.
                                 </p>
                             </div>
@@ -398,9 +314,9 @@ const Contacto = () => {
                         </div>
 
                         {/* FAQ Card */}
-                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-                            <h3 className="font-black text-[#0f1f42] text-base mb-4 flex items-center gap-2">
-                                <span className="w-6 h-6 rounded-lg bg-yellow-100 text-yellow-600 flex items-center justify-center text-xs font-black">?</span>
+                        <div className="bg-white dark:bg-[#161b27] rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm p-6">
+                            <h3 className="font-black text-[#0f1f42] dark:text-white text-base mb-4 flex items-center gap-2">
+                                <span className="w-6 h-6 rounded-lg bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400 flex items-center justify-center text-xs font-black">?</span>
                                 Perguntas Frequentes
                             </h3>
                             <div className="space-y-3">
@@ -409,9 +325,9 @@ const Contacto = () => {
                                     { q: 'Onde posso ver as minhas quotas?', a: 'Aceda ao sistema através do botão "Entrar no Sistema" com as suas credenciais.' },
                                     { q: 'Qual o prazo de resposta?', a: 'Respondemos a todas as mensagens no prazo máximo de 2 dias úteis.' },
                                 ].map(({ q, a }) => (
-                                    <div key={q} className="pb-3 border-b border-gray-50 last:border-0 last:pb-0">
-                                        <p className="text-sm font-bold text-slate-800 mb-1">{q}</p>
-                                        <p className="text-xs text-gray-500 leading-relaxed">{a}</p>
+                                    <div key={q} className="pb-3 border-b border-gray-50 dark:border-slate-800 last:border-0 last:pb-0">
+                                        <p className="text-sm font-bold text-slate-800 dark:text-white mb-1">{q}</p>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">{a}</p>
                                     </div>
                                 ))}
                             </div>

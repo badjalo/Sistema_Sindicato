@@ -156,12 +156,37 @@ const Header = ({ toggleSidebar }) => {
             title="Notificações"
             style={{ transition: 'all 0.2s cubic-bezier(0.34,1.56,0.64,1)' }}
           >
-            <Bell size={18} />
+            <style dangerouslySetInnerHTML={{__html: `
+              @keyframes slow-shake {
+                0%, 100% { transform: rotate(0deg); }
+                10%, 30%, 50%, 70%, 90% { transform: rotate(8deg); }
+                20%, 40%, 60%, 80% { transform: rotate(-8deg); }
+              }
+              .bell-alert {
+                animation: slow-shake 1.8s ease-in-out infinite;
+                transform-origin: top center;
+              }
+              @keyframes pulse-ring {
+                0% { transform: scale(0.95); opacity: 1; }
+                50% { transform: scale(1.3); opacity: 0.5; }
+                100% { transform: scale(0.95); opacity: 1; }
+              }
+              .notif-dot-pulse {
+                animation: pulse-ring 2s infinite;
+              }
+            `}} />
+            <Bell size={18} className={naoLidas > 0 ? "bell-alert text-yellow-500" : ""} />
             {naoLidas > 0 && (
-              <span
-                className="notif-dot absolute top-1.5 right-1.5 w-2 h-2 rounded-full"
-                style={{ background: '#ef4444', boxShadow: '0 0 0 2px var(--header-bg)' }}
-              />
+              <>
+                <span
+                  className="notif-dot absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full notif-dot-pulse"
+                  style={{ background: '#ef4444', boxShadow: '0 0 0 2px var(--header-bg)', opacity: 0.8 }}
+                />
+                <span
+                  className="notif-dot absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full"
+                  style={{ background: '#ef4444', boxShadow: '0 0 0 2px var(--header-bg)' }}
+                />
+              </>
             )}
           </button>
 

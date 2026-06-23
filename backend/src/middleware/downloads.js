@@ -91,7 +91,7 @@ const servePublicUpload = (uploadsBasePath) => {
             const { subdir, filename } = req.params;
 
             // Apenas permitir servir ficheiros de certas subpastas
-            const allowedSubdirs = ['fotos', 'assinaturas', 'assets', 'slider', 'documentos'];
+            const allowedSubdirs = ['fotos', 'assinaturas', 'assets', 'slider', 'documentos', 'obituario'];
             if (!allowedSubdirs.includes(subdir)) {
                 return res.status(403).json({ error: 'Tipo de ficheiro não permitido' });
             }
@@ -116,6 +116,7 @@ const servePublicUpload = (uploadsBasePath) => {
                 assinaturas: ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.svg'],
                 assets: ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.svg', '.css', '.js', '.json'],
                 slider: ['.jpg', '.jpeg', '.png', '.webp', '.gif'],
+                obituario: ['.jpg', '.jpeg', '.png', '.webp', '.gif'],
                 documentos: ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.txt', '.rtf', '.odt', '.ods']
             };
 
@@ -153,8 +154,14 @@ const servePublicUpload = (uploadsBasePath) => {
             const contentType = mimeTypes[ext] || 'application/octet-stream';
             res.setHeader('Content-Type', contentType);
 
-            // Para PDFs e documentos, permitir inline viewing
-            if (['.pdf'].includes(ext)) {
+            // ✅ CORS para html2canvas e outros clientes
+            res.setHeader('Access-Control-Allow-Origin', '*');
+            res.setHeader('Access-Control-Allow-Methods', 'GET');
+            res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+
+            // Imagens e documentos visíveis inline; outros como download
+            const imageExts = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.svg'];
+            if (imageExts.includes(ext) || ext === '.pdf') {
                 res.setHeader('Content-Disposition', 'inline');
             } else {
                 res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);

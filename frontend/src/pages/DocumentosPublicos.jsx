@@ -6,123 +6,9 @@ import {
     File, FileText, Image, Music, Video, Archive, Menu, X, Lock
 } from 'lucide-react';
 import logo from '../assets/logo.png';
+import PublicNavbar from '../components/PublicNavbar';
 
-// ─── NAVBAR ─────────────────────────────────────────────────────────────────
-const Navbar = () => {
-    const [scrolled, setScrolled] = useState(false);
-    const [menuOpen, setMenuOpen] = useState(false);
-    const currentPath = window.location.pathname;
 
-    useEffect(() => {
-        const onScroll = () => setScrolled(window.scrollY > 20);
-        window.addEventListener('scroll', onScroll);
-        return () => window.removeEventListener('scroll', onScroll);
-    }, []);
-
-    const navLinks = [
-        { label: 'Início', to: '/' },
-        { label: 'O Sindicato', to: '/sindicato' },
-        { label: 'Notícias', to: '/noticias' },
-        { label: 'Documentos', to: '/documentos-publicos' },
-        { label: 'Contacto', to: '/contacto' },
-    ];
-
-    return (
-        <nav
-            className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-                scrolled ? 'bg-white shadow-md py-2' : 'bg-white/95 backdrop-blur-sm py-3'
-            }`}
-        >
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex items-center justify-between">
-                    {/* Logo + Name */}
-                    <Link to="/" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
-                        <img
-                            src={logo}
-                            alt="SF-DGCI Logo"
-                            className="w-11 h-11 rounded-full object-cover ring-2 ring-yellow-400 shadow"
-                        />
-                        <div className="leading-tight">
-                            <p className="text-sm font-black text-[#1a2f5e] tracking-wide">SF-DGCI</p>
-                            <p className="text-[10px] text-gray-500 font-medium">Sistema de Gestão Sindical</p>
-                        </div>
-                    </Link>
-
-                    {/* Desktop Links */}
-                    <div className="hidden md:flex items-center gap-6">
-                        {navLinks.map((l) => {
-                            const isActive = currentPath === l.to;
-                            return (
-                                <Link
-                                    key={l.label}
-                                    to={l.to}
-                                    className={`text-sm font-semibold transition-colors duration-200 px-3 py-1.5 rounded-xl ${
-                                        isActive
-                                            ? 'text-blue-600 bg-blue-50/50'
-                                            : 'text-gray-600 hover:text-[#1a2f5e] hover:bg-slate-50'
-                                    }`}
-                                >
-                                    {l.label}
-                                </Link>
-                            );
-                        })}
-                    </div>
-
-                    {/* CTA */}
-                    <div className="hidden md:block">
-                        <Link
-                            to="/login"
-                            className="inline-flex items-center gap-2 bg-[#1a2f5e] text-white text-sm font-bold px-5 py-2.5 rounded-xl hover:bg-[#0f1f42] transition-all duration-200 shadow-sm hover:shadow-md"
-                        >
-                            <Lock size={14} />
-                            Entrar no Sistema
-                        </Link>
-                    </div>
-
-                    {/* Mobile toggle */}
-                    <button
-                        className="md:hidden text-gray-600 p-2 rounded-lg hover:bg-slate-100 transition-colors"
-                        onClick={() => setMenuOpen(!menuOpen)}
-                    >
-                        {menuOpen ? <X size={22} /> : <Menu size={22} />}
-                    </button>
-                </div>
-
-                {/* Mobile Menu */}
-                {menuOpen && (
-                    <div className="md:hidden mt-4 pb-4 border-t border-gray-100 pt-4 space-y-2">
-                        {navLinks.map((l) => {
-                            const isActive = currentPath === l.to;
-                            return (
-                                <Link
-                                    key={l.label}
-                                    to={l.to}
-                                    onClick={() => setMenuOpen(false)}
-                                    className={`block text-sm font-semibold p-2.5 rounded-lg ${
-                                        isActive
-                                            ? 'text-blue-600 bg-blue-50'
-                                            : 'text-gray-700 hover:text-[#1a2f5e] hover:bg-slate-50'
-                                    }`}
-                                >
-                                    {l.label}
-                                </Link>
-                            );
-                        })}
-                        <div className="pt-2">
-                            <Link
-                                to="/login"
-                                onClick={() => setMenuOpen(false)}
-                                className="flex items-center justify-center gap-2 bg-[#1a2f5e] text-white text-sm font-bold w-full py-3 rounded-xl hover:bg-[#0f1f42] transition-colors"
-                            >
-                                <Lock size={14} /> Entrar no Sistema
-                            </Link>
-                        </div>
-                    </div>
-                )}
-            </div>
-        </nav>
-    );
-};
 
 // ─── HERO ────────────────────────────────────────────────────────────────────
 const HeroSection = () => (
@@ -451,8 +337,8 @@ const Footer = () => (
 // ─── MAIN EXPORT ────────────────────────────────────────────────────────────
 const DocumentosPublicos = () => {
     return (
-        <div className="font-sans antialiased">
-            <Navbar />
+        <div className="font-sans antialiased bg-white dark:bg-[#0d1117] text-slate-800 dark:text-[#e6edf4] transition-colors duration-200">
+            <PublicNavbar />
             <HeroSection />
             <DocumentsGrid />
             <Footer />

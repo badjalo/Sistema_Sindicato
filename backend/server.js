@@ -48,12 +48,14 @@ const fotosDir = path.join(uploadsDir, 'fotos');
 const assetsDir = path.join(uploadsDir, 'assets');
 const documentosDir = path.join(uploadsDir, 'documentos');
 const assinaturasDir = path.join(uploadsDir, 'assinaturas');
+const obituarioDir = path.join(uploadsDir, 'obituario');
 try {
   if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
   if (!fs.existsSync(fotosDir)) fs.mkdirSync(fotosDir, { recursive: true });
   if (!fs.existsSync(assetsDir)) fs.mkdirSync(assetsDir, { recursive: true });
   if (!fs.existsSync(documentosDir)) fs.mkdirSync(documentosDir, { recursive: true });
   if (!fs.existsSync(assinaturasDir)) fs.mkdirSync(assinaturasDir, { recursive: true });
+  if (!fs.existsSync(obituarioDir)) fs.mkdirSync(obituarioDir, { recursive: true });
 } catch (err) {
   console.error('Não foi possível criar diretórios de upload:', err);
 }

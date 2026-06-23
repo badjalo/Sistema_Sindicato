@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { query } = require('../config/database');
 const { authenticate } = require('../middleware/auth');
+const { notificarAdmins } = require('../utils/notificacoes');
 
 // ─── Auto-criar tabela ────────────────────────────────────────────────────────
 let tableReady = false;
@@ -45,25 +46,13 @@ router.post('/', async (req, res) => {
             [nome.trim(), email.trim().toLowerCase(), assunto.trim(), mensagem.trim()]
         );
 
-        // Enviar notificação para todos os administradores ativos
-        try {
-            const admins = await query("SELECT id FROM utilizadores WHERE perfil = 'administrador' AND ativo = true");
-            for (const admin of admins.rows) {
-                await query(
-                    `INSERT INTO notificacoes (utilizador_id, titulo, mensagem, tipo, lida, link)
-                     VALUES ($1, $2, $3, $4, false, $5)`,
-                    [
-                        admin.id,
-                        'Nova Mensagem de Contacto',
-                        `Recebeu uma nova mensagem de ${nome.trim()} (${email.trim().toLowerCase()}) sobre "${assunto.trim()}".`,
-                        'contacto',
-                        '/mensagens'
-                    ]
-                );
-            }
-        } catch (err) {
-            console.error('Erro ao gerar notificação no backend:', err.message);
-        }
+        // Enviar notificação para todos os administradores ativos usando o utilitário
+        await notificarAdmins({
+            titulo: 'Nova Mensagem de Contacto',
+            mensagem: `Recebeu uma nova mensagem de ${nome.trim()} sobre "${assunto.trim()}".`,
+            tipo: 'info',
+            link: '/mensagens'
+        });
 
         res.status(201).json({ success: true, message: 'Mensagem enviada com sucesso.', id: result.rows[0].id });
     } catch (err) {

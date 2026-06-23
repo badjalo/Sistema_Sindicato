@@ -10,7 +10,7 @@ import {
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip as RechartsTooltip, Legend, ResponsiveContainer,
-  PieChart, Pie, Cell
+  PieChart, Pie, Cell, LineChart, Line, Area, AreaChart
 } from 'recharts';
 
 const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
@@ -169,7 +169,8 @@ const Dashboard = () => {
   const {
     membros, quotas, financeiro, fluxo_mensal,
     pagamentos_recentes = [], mensagens_pendentes = [],
-    total_mensagens_pendentes = 0, devedores_alerta = []
+    total_mensagens_pendentes = 0, devedores_alerta = [],
+    quotas_mensal = []
   } = data;
   const saldoMes = Number(financeiro?.receitas_mes || 0) - Number(financeiro?.despesas_mes || 0);
 
@@ -420,6 +421,96 @@ const Dashboard = () => {
           )}
         </div>
 
+      </div>
+
+      {/* ── Quotas Mensais Line Chart ── */}
+      <div
+        className="card"
+        style={{ animation: 'fadeUp 0.45s ease-out 0.5s both' }}
+      >
+        <div className="flex items-center justify-between mb-5">
+          <h3 className="font-bold text-base flex items-center gap-2" style={{ color: 'var(--text-1)' }}>
+            <span
+              className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+              style={{ background: 'rgba(168,85,247,0.1)', color: '#a855f7' }}
+            >
+              <CreditCard size={16} />
+            </span>
+            Quotas Mensais — {new Date().getFullYear()}
+          </h3>
+          <span
+            className="text-xs font-semibold px-3 py-1 rounded-full"
+            style={{ background: 'var(--surface-2)', color: 'var(--text-3)' }}
+          >
+            Pagas vs Pendentes
+          </span>
+        </div>
+        {quotas_mensal.length > 0 ? (
+          <ResponsiveContainer width="100%" height={220}>
+            <AreaChart
+              data={quotas_mensal.map(q => ({
+                mes: MESES[q.mes - 1] || q.mes,
+                Pagas: Number(q.pagas || 0),
+                Pendentes: Number(q.pendentes || 0),
+                'Valor (XOF)': Number(q.valor_pago || 0),
+              }))}
+              margin={{ top: 4, right: 4, left: -10, bottom: 0 }}
+            >
+              <defs>
+                <linearGradient id="colorPagas" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                </linearGradient>
+                <linearGradient id="colorPendentes" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
+              <XAxis
+                dataKey="mes"
+                axisLine={false} tickLine={false}
+                tick={{ fill: 'var(--text-3)', fontSize: 12, fontWeight: 500 }}
+                dy={8}
+              />
+              <YAxis
+                axisLine={false} tickLine={false}
+                tick={{ fill: 'var(--text-3)', fontSize: 11 }}
+                allowDecimals={false}
+              />
+              <RechartsTooltip
+                contentStyle={tooltipStyle}
+                cursor={{ fill: 'var(--surface-hover)', radius: 6 }}
+              />
+              <Legend
+                iconType="circle"
+                wrapperStyle={{ paddingTop: 16, fontSize: 13, fontWeight: 500, color: 'var(--text-2)' }}
+              />
+              <Area
+                type="monotone"
+                dataKey="Pagas"
+                stroke="#10b981"
+                strokeWidth={2.5}
+                fill="url(#colorPagas)"
+                dot={{ r: 4, fill: '#10b981', strokeWidth: 0 }}
+                activeDot={{ r: 6 }}
+              />
+              <Area
+                type="monotone"
+                dataKey="Pendentes"
+                stroke="#ef4444"
+                strokeWidth={2.5}
+                fill="url(#colorPendentes)"
+                dot={{ r: 4, fill: '#ef4444', strokeWidth: 0 }}
+                activeDot={{ r: 6 }}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        ) : (
+          <div className="flex items-center justify-center h-40" style={{ color: 'var(--text-3)' }}>
+            <p className="text-sm">Sem dados de quotas para este ano.</p>
+          </div>
+        )}
       </div>
 
       {/* ── Nova Secção: Actividade Recente e Alertas de Dívida ── */}
