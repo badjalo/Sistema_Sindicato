@@ -2,6 +2,9 @@ const router = require('express').Router();
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const { v4: uuidv4 } = require('uuid');
+const { fileTypeFromFile } = require('file-type');
+const sharp = require('sharp');
 const { query } = require('../config/database');
 const { authenticate } = require('../middleware/auth');
 const { authorize } = require('../middleware/rbac');
@@ -16,8 +19,7 @@ const storage = multer.diskStorage({
     cb(null, dir);
   },
   filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, 'slide-' + uniqueSuffix + path.extname(file.originalname));
+    cb(null, `slide_${uuidv4()}.webp`);
   }
 });
 
@@ -32,6 +34,37 @@ const upload = multer({
     }
   }
 });
+
+// Middleware para processar e otimizar imagem do slider
+const processUploadedImages = async (req, res, next) => {
+  try {
+    if (!req.file) return next();
+
+    const filePath = req.file.path;
+    const tempPath = filePath + '.tmp';
+
+    // Validar tipo real do ficheiro
+    const fileTypeResult = await fileTypeFromFile(filePath);
+    if (!fileTypeResult || !fileTypeResult.mime.startsWith('image/')) {
+      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+      return res.status(400).json({ error: 'Tipo de imagem inválido' });
+    }
+
+    // Redimensionar para max-width 1600px e otimizar para webp
+    await sharp(filePath)
+      .resize(1600, 1000, { fit: 'inside', withoutEnlargement: true })
+      .webp({ quality: 82 })
+      .toFile(tempPath);
+
+    fs.unlinkSync(filePath);
+    fs.renameSync(tempPath, filePath);
+    next();
+  } catch (err) {
+    if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+    console.error('[UPLOAD] Erro ao processar slide:', err);
+    return res.status(400).json({ error: 'Erro ao processar imagem: ' + err.message });
+  }
+};
 
 // ─── ROTA PÚBLICA ─────────────────────────────────────────────────────────────
 // Obtém os slides ativos para a Landing Page
@@ -58,7 +91,7 @@ router.get('/', authorize('configuracoes:read', 'configuracoes:update'), async (
 });
 
 // Criar novo slide
-router.post('/', authorize('configuracoes:update'), upload.single('imagem'), async (req, res, next) => {
+router.post('/', authorize('configuracoes:update'), upload.single('imagem'), processUploadedImages, async (req, res, next) => {
   try {
     const { titulo, descricao, link_url, ativo, ordem } = req.body;
     let imagem_url = null;
@@ -86,7 +119,7 @@ router.post('/', authorize('configuracoes:update'), upload.single('imagem'), asy
 });
 
 // Atualizar slide
-router.put('/:id', authorize('configuracoes:update'), upload.single('imagem'), async (req, res, next) => {
+router.put('/:id', authorize('configuracoes:update'), upload.single('imagem'), processUploadedImages, async (req, res, next) => {
   try {
     const { id } = req.params;
     const { titulo, descricao, link_url, ativo, ordem } = req.body;

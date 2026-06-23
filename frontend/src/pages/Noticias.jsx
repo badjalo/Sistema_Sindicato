@@ -1,128 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import api from '../services/api';
+import api, { getBackendUrl } from '../services/api';
 import {
     ArrowRight, Calendar, Clock, Tag, ChevronLeft, ChevronRight,
     Search, Filter, Heart, MessageCircle, Share2, Menu, X, Lock
 } from 'lucide-react';
 import logo from '../assets/logo.png';
+import PublicNavbar from '../components/PublicNavbar';
 
-// ─── NAVBAR ─────────────────────────────────────────────────────────────────
-const Navbar = () => {
-    const [scrolled, setScrolled] = useState(false);
-    const [menuOpen, setMenuOpen] = useState(false);
-    const currentPath = window.location.pathname;
 
-    useEffect(() => {
-        const onScroll = () => setScrolled(window.scrollY > 20);
-        window.addEventListener('scroll', onScroll);
-        return () => window.removeEventListener('scroll', onScroll);
-    }, []);
-
-    const navLinks = [
-        { label: 'Início', to: '/' },
-        { label: 'O Sindicato', to: '/sindicato' },
-        { label: 'Notícias', to: '/noticias' },
-        { label: 'Documentos', to: '/documentos-publicos' },
-        { label: 'Contacto', to: '/contacto' },
-    ];
-
-    return (
-        <nav
-            className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-                scrolled ? 'bg-white shadow-md py-2' : 'bg-white/95 backdrop-blur-sm py-3'
-            }`}
-        >
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex items-center justify-between">
-                    {/* Logo + Name */}
-                    <Link to="/" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
-                        <img
-                            src={logo}
-                            alt="SF-DGCI Logo"
-                            className="w-11 h-11 rounded-full object-cover ring-2 ring-yellow-400 shadow"
-                        />
-                        <div className="leading-tight">
-                            <p className="text-sm font-black text-[#1a2f5e] tracking-wide">SF-DGCI</p>
-                            <p className="text-[10px] text-gray-500 font-medium">Sistema de Gestão Sindical</p>
-                        </div>
-                    </Link>
-
-                    {/* Desktop Links */}
-                    <div className="hidden md:flex items-center gap-6">
-                        {navLinks.map((l) => {
-                            const isActive = currentPath === l.to;
-                            return (
-                                <Link
-                                    key={l.label}
-                                    to={l.to}
-                                    className={`text-sm font-semibold transition-colors duration-200 px-3 py-1.5 rounded-xl ${
-                                        isActive
-                                            ? 'text-blue-600 bg-blue-50/50'
-                                            : 'text-gray-600 hover:text-[#1a2f5e] hover:bg-slate-50'
-                                    }`}
-                                >
-                                    {l.label}
-                                </Link>
-                            );
-                        })}
-                    </div>
-
-                    {/* CTA */}
-                    <div className="hidden md:block">
-                        <Link
-                            to="/login"
-                            className="inline-flex items-center gap-2 bg-[#1a2f5e] text-white text-sm font-bold px-5 py-2.5 rounded-xl hover:bg-[#0f1f42] transition-all duration-200 shadow-sm hover:shadow-md"
-                        >
-                            <Lock size={14} />
-                            Entrar no Sistema
-                        </Link>
-                    </div>
-
-                    {/* Mobile toggle */}
-                    <button
-                        className="md:hidden text-gray-600 p-2 rounded-lg hover:bg-slate-100 transition-colors"
-                        onClick={() => setMenuOpen(!menuOpen)}
-                    >
-                        {menuOpen ? <X size={22} /> : <Menu size={22} />}
-                    </button>
-                </div>
-
-                {/* Mobile Menu */}
-                {menuOpen && (
-                    <div className="md:hidden mt-4 pb-4 border-t border-gray-100 pt-4 space-y-2">
-                        {navLinks.map((l) => {
-                            const isActive = currentPath === l.to;
-                            return (
-                                <Link
-                                    key={l.label}
-                                    to={l.to}
-                                    onClick={() => setMenuOpen(false)}
-                                    className={`block text-sm font-semibold p-2.5 rounded-lg ${
-                                        isActive
-                                            ? 'text-blue-600 bg-blue-50'
-                                            : 'text-gray-700 hover:text-[#1a2f5e] hover:bg-slate-50'
-                                    }`}
-                                >
-                                    {l.label}
-                                </Link>
-                            );
-                        })}
-                        <div className="pt-2">
-                            <Link
-                                to="/login"
-                                onClick={() => setMenuOpen(false)}
-                                className="flex items-center justify-center gap-2 bg-[#1a2f5e] text-white text-sm font-bold w-full py-3 rounded-xl hover:bg-[#0f1f42] transition-colors"
-                            >
-                                <Lock size={14} /> Entrar no Sistema
-                            </Link>
-                        </div>
-                    </div>
-                )}
-            </div>
-        </nav>
-    );
-};
 
 // ─── HERO ────────────────────────────────────────────────────────────────────
 const HeroSection = () => (
@@ -175,6 +61,12 @@ const NewsGrid = () => {
             setLoading(true);
             const response = await api.get('/comunicados/publicos');
             if (response.data.success && response.data.data) {
+                const BACKEND = getBackendUrl();
+                const buildImgUrl = (url) => {
+                    if (!url) return null;
+                    if (url.startsWith('http')) return url;
+                    return `${BACKEND}${url}`;
+                };
                 const newsData = response.data.data.map(item => ({
                     id: item.id,
                     title: item.titulo,
@@ -184,7 +76,8 @@ const NewsGrid = () => {
                     tipo: item.tipo,
                     date: item.data_publicacao || item.criado_em,
                     author: item.autor_nome || 'Administração',
-                    image: null,
+                    foto_url: buildImgUrl(item.foto_url),
+                    nome_falecido: item.nome_falecido || null,
                     comments: 0,
                     featured: item.urgente === true,
                 }));
@@ -204,6 +97,7 @@ const NewsGrid = () => {
             'convocatoria': 'Convocação',
             'informacao': 'Informação',
             'urgente': 'Urgente',
+            'obito': 'Óbito',
         };
         return categoryMap[tipo] || tipo;
     };
@@ -214,12 +108,13 @@ const NewsGrid = () => {
             circular: 'bg-blue-100 text-blue-700',
             convocatoria: 'bg-purple-100 text-purple-700',
             informacao: 'bg-blue-100 text-blue-700',
-            urgente: 'bg-red-100 text-red-600'
+            urgente: 'bg-red-100 text-red-600',
+            obito: 'bg-gray-200 text-gray-700',
         };
         return m[tipo] || 'bg-yellow-100 text-yellow-700';
     };
 
-    const categories = ['Todas', 'Aviso', 'Circular', 'Convocação', 'Informação', 'Urgente'];
+    const categories = ['Todas', 'Aviso', 'Circular', 'Convocação', 'Informação', 'Urgente', 'Óbito'];
 
     const filteredNews = news.filter((item) => {
         const matchesCategory = filter === 'Todas' || item.category === filter;
@@ -264,7 +159,7 @@ const NewsGrid = () => {
     };
 
     return (
-        <section className="bg-gray-50 py-24">
+        <section className="bg-gray-50 dark:bg-[#0d1117] py-24">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 {/* Search & Filter */}
                 <div className="mb-12">
@@ -277,7 +172,7 @@ const NewsGrid = () => {
                                 placeholder="Procurar notícias..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
+                                className="w-full pl-10 pr-4 py-2.5 border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-800 dark:text-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
                             />
                         </div>
 
@@ -287,7 +182,7 @@ const NewsGrid = () => {
                             <select
                                 value={filter}
                                 onChange={(e) => setFilter(e.target.value)}
-                                className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent appearance-none bg-white cursor-pointer"
+                                className="w-full pl-10 pr-4 py-2.5 border border-gray-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent appearance-none bg-white dark:bg-slate-800 text-gray-800 dark:text-gray-200 cursor-pointer"
                             >
                                 {categories.map((cat) => (
                                     <option key={cat} value={cat}>
@@ -306,7 +201,7 @@ const NewsGrid = () => {
                                 onClick={() => setFilter(cat)}
                                 className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all duration-200 ${filter === cat
                                     ? 'bg-[#1a2f5e] text-white'
-                                    : 'bg-white border border-gray-200 text-gray-700 hover:border-[#1a2f5e]'
+                                    : 'bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-gray-300 hover:border-[#1a2f5e] dark:hover:border-blue-500'
                                     }`}
                             >
                                 {cat}
@@ -317,42 +212,99 @@ const NewsGrid = () => {
 
                 {/* Loading State */}
                 {loading ? (
-                    <div className="text-center py-16">
-                        <div className="inline-block">
-                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1a2f5e]"></div>
+                    <div className="space-y-12">
+                        {/* Featured News Skeleton */}
+                        <div>
+                            <div className="h-6 w-48 bg-gray-200 dark:bg-slate-800 rounded animate-pulse mb-6"></div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {[1, 2].map((n) => (
+                                    <div key={n} className="bg-white dark:bg-[#161b27] border border-gray-100 dark:border-slate-800 rounded-2xl overflow-hidden p-6 space-y-4">
+                                        <div className="w-full h-44 bg-gray-200 dark:bg-slate-800 rounded-xl animate-pulse"></div>
+                                        <div className="h-4 w-1/4 bg-gray-200 dark:bg-slate-800 rounded animate-pulse"></div>
+                                        <div className="h-6 w-3/4 bg-gray-200 dark:bg-slate-800 rounded animate-pulse"></div>
+                                        <div className="h-4 w-full bg-gray-200 dark:bg-slate-800 rounded animate-pulse"></div>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
-                        <p className="text-gray-500 mt-4">A carregar notícias...</p>
+                        
+                        {/* Regular News Skeleton */}
+                        <div>
+                            <div className="h-6 w-48 bg-gray-200 dark:bg-slate-800 rounded animate-pulse mb-6"></div>
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                {[1, 2, 3, 4].map((n) => (
+                                    <div key={n} className="bg-white dark:bg-[#161b27] border border-gray-100 dark:border-slate-800 rounded-2xl p-6 flex gap-4">
+                                        <div className="w-24 h-24 bg-gray-200 dark:bg-slate-800 rounded-xl animate-pulse flex-shrink-0"></div>
+                                        <div className="flex-1 space-y-3">
+                                            <div className="h-4 w-1/4 bg-gray-200 dark:bg-slate-800 rounded animate-pulse"></div>
+                                            <div className="h-5 w-3/4 bg-gray-200 dark:bg-slate-800 rounded animate-pulse"></div>
+                                            <div className="h-4 w-full bg-gray-200 dark:bg-slate-800 rounded animate-pulse"></div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
                     </div>
                 ) : (
                     <>
-                        {/* Featured News Carousel */}
+                        {/* Featured News */}
                         {featuredNews.length > 0 && (
                             <div className="mb-16">
-                                <h2 className="text-2xl font-black text-[#0f1f42] mb-8">Em Destaque</h2>
+                                <h2 className="text-2xl font-black text-[#0f1f42] dark:text-white mb-8">Em Destaque</h2>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     {featuredNews.map((item) => (
                                         <div
                                             key={item.id}
                                             onClick={() => setSelectedNews(item)}
-                                            className="group bg-white border border-gray-100 rounded-2xl overflow-hidden hover:shadow-lg hover:border-yellow-400/50 transition-all duration-300 cursor-pointer"
+                                            className="group bg-white dark:bg-[#161b27] border border-gray-100 dark:border-slate-800 rounded-2xl overflow-hidden hover:shadow-lg hover:border-yellow-400/50 dark:hover:border-yellow-400/30 transition-all duration-300 cursor-pointer"
                                         >
-                                            {/* Image placeholder */}
-                                                             {/* Content */}
+                                            {/* Imagem de capa */}
+                                            {item.foto_url ? (
+                                                <div className="relative w-full h-44 overflow-hidden bg-gray-100">
+                                                    <img
+                                                        src={item.foto_url}
+                                                        alt={item.nome_falecido || item.title}
+                                                        className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ${
+                                                            item.tipo === 'obito' ? 'filter grayscale' : ''
+                                                        }`}
+                                                        onError={(e) => { e.target.parentElement.style.display='none'; }}
+                                                    />
+                                                    {item.tipo === 'obito' && (
+                                                        <div className="absolute inset-0 bg-gradient-to-t from-gray-900/60 to-transparent flex items-end p-4">
+                                                            <p className="text-white text-sm font-semibold italic">Em memória de: {item.nome_falecido}</p>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ) : (
+                                                <div className={`w-full h-32 flex items-center justify-center ${
+                                                    item.tipo === 'obito'
+                                                        ? 'bg-gradient-to-br from-gray-200 to-gray-300'
+                                                        : 'bg-gradient-to-br from-[#1a2f5e]/10 to-yellow-400/10'
+                                                }`}>
+                                                    <Tag size={32} className={item.tipo === 'obito' ? 'text-gray-400' : 'text-[#1a2f5e]/30'} />
+                                                </div>
+                                            )}
+
+                                            {/* Content */}
                                             <div className="p-6">
                                                 <div className="flex items-center gap-2 mb-3">
                                                     <span className={`inline-block px-2 py-0.5 text-[9px] font-extrabold tracking-wide rounded-md ${getCategoryStyle(item.tipo)}`}>
-                                                        {item.category}
+                                                        {item.tipo === 'obito' ? '⚰️ ' : ''}{item.category}
                                                     </span>
-                                                    <span className="text-xs text-gray-500 flex items-center gap-1">
+                                                    <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
                                                         <Calendar size={12} /> {formatDate(item.date)}
                                                     </span>
                                                 </div>
-                                                <h3 className="text-lg font-bold text-[#0f1f42] mb-2 group-hover:text-yellow-600 transition-colors">
+                                                <h3 className={`text-lg font-bold mb-2 transition-colors ${
+                                                    item.tipo === 'obito'
+                                                        ? 'text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white'
+                                                        : 'text-[#0f1f42] dark:text-white group-hover:text-yellow-600 dark:group-hover:text-yellow-400'
+                                                }`}>
                                                     {item.title}
                                                 </h3>
-                                                <p className="text-gray-600 text-sm mb-4 line-clamp-2">{item.excerpt}</p>
-                                                <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                                                    <div className="flex items-center gap-4 text-xs text-gray-500">
+                                                <p className="text-gray-600 dark:text-gray-400 text-sm mb-4 line-clamp-2">{item.excerpt}</p>
+                                                <div className="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-slate-800">
+                                                    <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
                                                         <button
                                                             onClick={(e) => toggleLike(e, item.id)}
                                                             className={`flex items-center gap-1.5 font-semibold transition-all duration-200 ${likedIds.includes(item.id) ? 'text-red-500' : 'text-gray-400 hover:text-red-400'}`}
@@ -379,35 +331,68 @@ const NewsGrid = () => {
                         {/* Regular News List */}
                         {regularNews.length > 0 && (
                             <div>
-                                <h2 className="text-2xl font-black text-[#0f1f42] mb-8">Todas as Notícias</h2>
+                                <h2 className="text-2xl font-black text-[#0f1f42] dark:text-white mb-8">Todas as Notícias</h2>
                                 <div className="space-y-4">
                                     {regularNews.map((item) => (
                                         <div
                                             key={item.id}
                                             onClick={() => setSelectedNews(item)}
-                                            className="group bg-white border border-gray-100 rounded-xl p-6 hover:shadow-md hover:border-yellow-400/50 transition-all duration-300 cursor-pointer flex gap-4"
+                                            className={`group bg-white dark:bg-[#161b27] border rounded-xl p-6 hover:shadow-md transition-all duration-300 cursor-pointer flex gap-4 ${
+                                                item.tipo === 'obito'
+                                                    ? 'border-gray-300 dark:border-slate-700 hover:border-gray-500 dark:hover:border-gray-500'
+                                                    : 'border-gray-100 dark:border-slate-800 hover:border-yellow-400/50 dark:hover:border-yellow-400/30'
+                                            }`}
                                         >
-                                            {/* Icon */}
-                                            <div className="bg-gradient-to-br from-[#1a2f5e]/10 to-yellow-400/10 w-16 h-16 rounded-lg flex items-center justify-center flex-shrink-0">
-                                                <Tag size={24} className="text-[#1a2f5e]/50" />
-                                            </div>
+                                            {/* Imagem / Icon */}
+                                            {item.foto_url ? (
+                                                <div className="flex-shrink-0 relative">
+                                                    <img
+                                                        src={item.foto_url}
+                                                        alt={item.nome_falecido || item.title}
+                                                        className={`w-20 h-20 rounded-xl object-cover ring-2 ${
+                                                            item.tipo === 'obito'
+                                                                ? 'ring-gray-300 filter grayscale'
+                                                                : 'ring-yellow-200'
+                                                        }`}
+                                                        onError={(e) => { e.target.parentElement.style.display='none'; }}
+                                                    />
+                                                    {item.tipo === 'obito' && (
+                                                        <span className="absolute -bottom-1 -right-1 text-base">⚰️</span>
+                                                    )}
+                                                </div>
+                                            ) : (
+                                                <div className={`w-16 h-16 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                                                    item.tipo === 'obito'
+                                                        ? 'bg-gray-100'
+                                                        : 'bg-gradient-to-br from-[#1a2f5e]/10 to-yellow-400/10'
+                                                }`}>
+                                                    <Tag size={24} className={item.tipo === 'obito' ? 'text-gray-400' : 'text-[#1a2f5e]/50'} />
+                                                </div>
+                                            )}
 
                                             {/* Content */}
-                                            <div className="flex-1 min-w-0">
+                                                <div className="flex-1 min-w-0">
                                                 <div className="flex items-center gap-2 mb-2">
                                                     <span className={`inline-block px-2 py-0.5 text-[9px] font-extrabold tracking-wide rounded-md ${getCategoryStyle(item.tipo)}`}>
-                                                        {item.category}
+                                                        {item.tipo === 'obito' ? '⛰️ ' : ''}{item.category}
                                                     </span>
-                                                    <span className="text-xs text-gray-500 flex items-center gap-1">
+                                                    <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
                                                         <Calendar size={12} /> {formatDate(item.date)}
                                                     </span>
-                                                    <span className="text-xs text-gray-400">•</span>
-                                                    <span className="text-xs text-gray-500">{item.author}</span>
+                                                    <span className="text-xs text-gray-400 dark:text-gray-600">•</span>
+                                                    <span className="text-xs text-gray-500 dark:text-gray-400">{item.author}</span>
                                                 </div>
-                                                <h3 className="text-base font-bold text-[#0f1f42] mb-1 group-hover:text-yellow-600 transition-colors">
+                                                <h3 className={`text-base font-bold mb-1 transition-colors ${
+                                                    item.tipo === 'obito'
+                                                        ? 'text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white'
+                                                        : 'text-[#0f1f42] dark:text-white group-hover:text-yellow-600 dark:group-hover:text-yellow-400'
+                                                }`}>
                                                     {item.title}
                                                 </h3>
-                                                <p className="text-gray-600 text-sm line-clamp-2">{item.excerpt}</p>
+                                                {item.tipo === 'obito' && item.nome_falecido && (
+                                                    <p className="text-xs text-gray-500 dark:text-gray-400 italic mb-1">Em memória de: <strong>{item.nome_falecido}</strong></p>
+                                                )}
+                                                <p className="text-gray-600 dark:text-gray-400 text-sm line-clamp-2">{item.excerpt}</p>
                                             </div>
 
                                             {/* Stats */}
@@ -425,7 +410,9 @@ const NewsGrid = () => {
                                                 </span>
                                             </div>
 
-                                            <ChevronRight size={18} className="text-gray-300 group-hover:text-yellow-400 flex-shrink-0" />
+                                            <ChevronRight size={18} className={`flex-shrink-0 ${
+                                                item.tipo === 'obito' ? 'text-gray-300 group-hover:text-gray-500' : 'text-gray-300 group-hover:text-yellow-400'
+                                            }`} />
                                         </div>
                                     ))}
                                 </div>
@@ -446,12 +433,16 @@ const NewsGrid = () => {
                 {/* Modal para ver notícia completa */}
                 {selectedNews && (
                     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-                        <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                        <div className="bg-white dark:bg-[#161b27] rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
                             {/* Header */}
-                            <div className="sticky top-0 bg-gradient-to-r from-[#1a2f5e] to-[#0f1f42] p-6 text-white flex items-center justify-between">
+                            <div className={`sticky top-0 p-6 text-white flex items-center justify-between ${
+                                selectedNews.tipo === 'obito'
+                                    ? 'bg-gradient-to-r from-gray-700 to-gray-900'
+                                    : 'bg-gradient-to-r from-[#1a2f5e] to-[#0f1f42]'
+                            }`}>
                                 <div>
                                     <span className={`inline-block px-2 py-0.5 text-[9px] font-extrabold tracking-wide rounded-md ${getCategoryStyle(selectedNews.tipo)} mb-2`}>
-                                        {selectedNews.category}
+                                        {selectedNews.tipo === 'obito' ? '⚰️ ' : ''}{selectedNews.category}
                                     </span>
                                     <h2 className="text-2xl font-black">{selectedNews.title}</h2>
                                 </div>
@@ -463,9 +454,44 @@ const NewsGrid = () => {
                                 </button>
                             </div>
 
+                            {/* Foto do falecido no modal */}
+                            {selectedNews.tipo === 'obito' && (selectedNews.foto_url || selectedNews.nome_falecido) && (
+                                <div className="flex items-center gap-5 px-6 py-5 bg-gray-50 dark:bg-[#0d1117] border-b border-gray-200 dark:border-slate-800">
+                                    {selectedNews.foto_url ? (
+                                        <img
+                                            src={selectedNews.foto_url}
+                                            alt={selectedNews.nome_falecido || 'Falecido'}
+                                            className="w-24 h-24 rounded-full object-cover ring-4 ring-gray-300 dark:ring-slate-700 shadow-md flex-shrink-0"
+                                            onError={(e) => { e.target.style.display='none'; }}
+                                        />
+                                    ) : (
+                                        <div className="w-24 h-24 rounded-full bg-gray-200 dark:bg-slate-800 flex items-center justify-center flex-shrink-0 ring-4 ring-gray-300 dark:ring-slate-700">
+                                            <span className="text-3xl">🕊️</span>
+                                        </div>
+                                    )}
+                                    <div>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-widest font-semibold mb-1">Em memória de</p>
+                                        <p className="text-xl font-black text-gray-800 dark:text-white">{selectedNews.nome_falecido || '—'}</p>
+                                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 italic">Que descanse em paz</p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Foto para notícias normais no modal */}
+                            {selectedNews.tipo !== 'obito' && selectedNews.foto_url && (
+                                <div className="w-full h-64 overflow-hidden bg-gray-100 border-b border-gray-200">
+                                    <img
+                                        src={selectedNews.foto_url}
+                                        alt={selectedNews.title}
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => { e.target.parentElement.style.display='none'; }}
+                                    />
+                                </div>
+                            )}
+
                             {/* Content */}
                             <div className="p-6">
-                                <div className="flex items-center gap-4 text-sm text-gray-600 mb-6 pb-6 border-b border-gray-200">
+                                <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400 mb-6 pb-6 border-b border-gray-200 dark:border-slate-800">
                                     <span className="flex items-center gap-1">
                                         <Calendar size={14} /> {formatDate(selectedNews.date)}
                                     </span>
@@ -474,14 +500,14 @@ const NewsGrid = () => {
                                 </div>
 
                                 <div className="prose max-w-none">
-                                    <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
+                                    <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed">
                                         {selectedNews.content}
                                     </p>
                                 </div>
                             </div>
 
                             {/* Footer */}
-                            <div className="sticky bottom-0 bg-gray-50 p-6 border-t border-gray-200 flex items-center justify-between">
+                            <div className="sticky bottom-0 bg-gray-50 dark:bg-[#0d1117] p-6 border-t border-gray-200 dark:border-slate-800 flex items-center justify-between">
                                 <div className="text-xs text-gray-500 flex items-center gap-4">
                                     <button
                                         onClick={(e) => toggleLike(e, selectedNews.id)}
@@ -526,8 +552,8 @@ const Footer = () => (
 // ─── MAIN EXPORT ────────────────────────────────────────────────────────────
 const Noticias = () => {
     return (
-        <div className="font-sans antialiased">
-            <Navbar />
+        <div className="font-sans antialiased bg-white dark:bg-[#0d1117] text-slate-800 dark:text-[#e6edf4] transition-colors duration-200">
+            <PublicNavbar />
             <HeroSection />
             <NewsGrid />
             <Footer />

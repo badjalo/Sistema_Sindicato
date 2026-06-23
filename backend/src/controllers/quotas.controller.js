@@ -3,6 +3,7 @@ const PDFDocument = require('pdfkit');
 const fs = require('fs');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
+const { criarNotificacao, notificarAdmins } = require('../utils/notificacoes');
 
 /** GET /api/quotas/config */
 const obterConfig = async (req, res, next) => {
@@ -240,6 +241,18 @@ const registarPagamento = async (req, res, next) => {
     }
 
     res.status(201).json({ success: true, data: result.rows[0], message: 'Pagamento registado com sucesso' });
+
+    // ── Notificação automática ──
+    const MESES_PT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+    const nomeMes = MESES_PT[(mes - 1)] || mes;
+    // Notifica o próprio utilizador que registou
+    criarNotificacao({
+      utilizador_id: req.user.id,
+      titulo: 'Pagamento Registado',
+      mensagem: `Quota de ${nomeMes}/${ano} de ${membro?.rows[0]?.nome_completo || 'membro'} registada com sucesso.`,
+      tipo: 'sucesso',
+      link: '/quotas'
+    });
   } catch (err) { next(err); }
 };
 
@@ -319,6 +332,16 @@ const registarPagamentoLote = async (req, res, next) => {
     }
 
     res.json({ success: true, count: resultados.length, message: `${resultados.length} pagamentos processados com sucesso.` });
+
+    // ── Notificação automática ──
+    const MESES_PT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+    const nomeMes = MESES_PT[(mes - 1)] || mes;
+    notificarAdmins({
+      titulo: 'Pagamento em Lote Registado',
+      mensagem: `${resultados.length} quotas de ${nomeMes}/${ano} foram registadas em lote por ${req.user.nome || 'utilizador'}.`,
+      tipo: 'info',
+      link: '/quotas'
+    });
   } catch (err) { next(err); }
 };
 
